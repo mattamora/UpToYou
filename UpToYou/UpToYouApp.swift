@@ -24,7 +24,10 @@ struct UpToYouApp: App {
 
     var body: some Scene {
         WindowGroup {
-            Home_Screen()
+            
+            NavigationStack {
+                Home_Screen()
+            }
         }
     }
 }

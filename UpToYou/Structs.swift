@@ -4,7 +4,15 @@
 //
 //  Created by Matthew Amora on 3/1/25.
 //
-// Contains all the structs used for Up To You
+// Contains all the structs and definitions used for Up To You
+
+import SwiftUI
+
+// main app color
+extension Color {
+    static let mainColor = Color(hue: 1.0, saturation: 0.183, brightness: 0.092)
+}
+
 
 // Bottom Icons
 struct BottomIcons {
@@ -22,5 +30,7 @@ let bottomItems = [
     BottomIcons(icon: "person", label: "Profile")
 ]
 */
+
+
 
 

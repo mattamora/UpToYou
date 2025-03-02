@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		77ACB4B62D74EA80003AA09B /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 77ACB4B52D74EA80003AA09B /* FirebaseAuth */; };
 		77ACB4B82D74EA80003AA09B /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 77ACB4B72D74EA80003AA09B /* FirebaseFirestore */; };
+		77ACB4CE2D750FC9003AA09B /* Launch Screen 2.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 77ACB4BD2D750FC9003AA09B /* Launch Screen 2.storyboard */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,6 +33,7 @@
 		7721890C2D728DCA00BCDBF3 /* UpToYou.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = UpToYou.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7721891C2D728DD300BCDBF3 /* UpToYouTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UpToYouTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		772189262D728DD300BCDBF3 /* UpToYouUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UpToYouUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		77ACB4BD2D750FC9003AA09B /* Launch Screen 2.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = "Launch Screen 2.storyboard"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -82,6 +84,7 @@
 		772189032D728DCA00BCDBF3 = {
 			isa = PBXGroup;
 			children = (
+				77ACB4BD2D750FC9003AA09B /* Launch Screen 2.storyboard */,
 				7721890E2D728DCA00BCDBF3 /* UpToYou */,
 				7721891F2D728DD300BCDBF3 /* UpToYouTests */,
 				772189292D728DD300BCDBF3 /* UpToYouUITests */,
@@ -224,6 +227,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				77ACB4CE2D750FC9003AA09B /* Launch Screen 2.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
