@@ -9,19 +9,23 @@ import SwiftUI
 
 struct Profile_Screen: View {
     
+    // Navigation Purposes, no need for Profile_Screen
+    @State private var toHome_Screen = false
+    @State private var toList_Screen = false
+    @State private var toShuffle_Screen = false
+    @State private var toFavorites_Screen = false
+    
     @State var email = ""
     @State var password = ""
-    
-   
     
     var body: some View {
         NavigationStack {
             ZStack {
                 Color.mainColor.ignoresSafeArea()
-
+                
                 VStack {
                     
-                    Text("Up To You")
+                    Text("Profile")
                         .foregroundColor(.gray)
                     
                     Spacer()
@@ -35,74 +39,80 @@ struct Profile_Screen: View {
                     HStack {
                         Spacer()
                         VStack {
-                            NavigationLink(
-                                destination: Home_Screen(),
-                                label: {
-                                  Image(systemName: "house")
-                                      .resizable()
-                                      .frame(width: 33, height: 33)
-                            })
+                            Image(systemName: "house")
+                                .resizable()
+                                .frame(width: 33, height: 33)
+                                .onTapGesture {toHome_Screen = true}
                             Text("Home")
                                 .font(.caption)
                         }
                         Spacer()
                         VStack {
-                            NavigationLink(
-                                destination: List_Screen(),
-                                label: {
-                                  Image(systemName: "list.bullet.circle")
-                                      .resizable()
-                                      .frame(width: 33, height: 33)
-                            })
+                            Image(systemName: "list.bullet.circle")
+                                .resizable()
+                                .frame(width: 33, height: 33)
+                                .onTapGesture {toList_Screen = true}
                             Text("List")
                                 .font(.caption)
                         }
                         Spacer()
                         VStack {
-                            NavigationLink(
-                                destination: Shuffle_Screen(),
-                                label: {
-                                  Image(systemName: "arrow.trianglehead.2.clockwise")
-                                      .resizable()
-                                      .frame(width: 33, height: 33)
-                            })
+                            Image(systemName: "arrow.trianglehead.2.clockwise")
+                                .resizable()
+                                .frame(width: 33, height: 33)
+                                .onTapGesture {toShuffle_Screen = true}
                             Text("Shuffle")
                                 .font(.caption)
                         }
                         Spacer()
                         VStack {
-                            NavigationLink(
-                                destination: Favorites_Screen(),
-                                label: {
-                                  Image(systemName: "heart")
-                                      .resizable()
-                                      .frame(width: 33, height: 33)
-                            })
+                            Image(systemName: "heart")
+                                .resizable()
+                                .frame(width: 33, height: 33)
+                                .onTapGesture {
+                                    toFavorites_Screen = true
+                                    print("Tapped")
+                                }
                             Text("Favorites")
                                 .font(.caption)
                         }
                         Spacer()
                         VStack {
-                            NavigationLink(
-                                destination: Profile_Screen(),
-                                label: {
-                                  Image(systemName: "person")
-                                      .resizable()
-                                      .frame(width: 33, height: 33)
-                            })
+                            Image(systemName: "person.fill")
+                                .resizable()
+                                .frame(width: 33, height: 33)
                             Text("Profile")
                                 .font(.caption)
+                                .underline()
+                                .bold()
                         }
                         Spacer()
                     }
                     .padding(.bottom, 20)
                     .foregroundColor(.gray)
-
+                    .navigationDestination(isPresented: $toHome_Screen) {
+                        Home_Screen()
+                            .navigationBarBackButtonHidden(true)
+                    }
+                    .navigationDestination(isPresented: $toList_Screen) {
+                        List_Screen()
+                            .navigationBarBackButtonHidden(true)
+                    }
+                    .navigationDestination(isPresented: $toShuffle_Screen) {
+                        Shuffle_Screen()
+                            .navigationBarBackButtonHidden(true)
+                    }
+                    .navigationDestination(isPresented: $toFavorites_Screen) {
+                        Favorites_Screen()
+                            .navigationBarBackButtonHidden(true)
+                    }
+                    
                 } // end of VStack
+               
             } // end of ZStack
         } // end of Navigation Stack
-    }
-}
+    } // end of body view
+} // end of Profile view
 
 #Preview {
     Profile_Screen()
