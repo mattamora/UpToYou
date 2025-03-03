@@ -15,8 +15,7 @@ struct Profile_Screen: View {
     @State private var toShuffle_Screen = false
     @State private var toFavorites_Screen = false
     
-    @State var email = ""
-    @State var password = ""
+    @StateObject var viewModel = LoginViewViewModel()
     
     var body: some View {
         NavigationStack {
@@ -27,6 +26,20 @@ struct Profile_Screen: View {
                     
                     Text("Profile")
                         .foregroundColor(.gray)
+                    
+                    Spacer()
+                    
+                    // to account registration page
+                    HStack {
+                        Text("Don't have an account?")
+                            .foregroundColor(.gray)
+                        NavigationLink(destination: Create_Account_Screen(),
+                                       label: {
+                            Text("Sign Up")
+                                .underline()
+                                .foregroundStyle(Color.themeColor)
+                        })
+                    }
                     
                     Spacer()
                     
@@ -108,7 +121,6 @@ struct Profile_Screen: View {
                     }
                     
                 } // end of VStack
-               
             } // end of ZStack
         } // end of Navigation Stack
     } // end of body view
