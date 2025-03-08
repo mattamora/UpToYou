@@ -15,6 +15,9 @@ struct Login_Screen: View {
     @State private var toShuffle_Screen = false
     @State private var toFavorites_Screen = false
     
+    // For account login, info
+    @StateObject var user_login = LoginViewModel()
+    
     
     var body: some View {
         NavigationStack {
@@ -26,21 +29,72 @@ struct Login_Screen: View {
                         .foregroundStyle(.gray)
                         .font(.system(size: 50))
                         .bold()
-                        .offset(y: 80)
+                        .offset(y: 40)
                     
                     Spacer()
+                    // Email/username field
+                    Image(systemName: "envelope.fill")
+                        .foregroundStyle(.gray)
+                        .font(.system(size: 50))
+                        .offset(y: -25)
+                    TextField("Email", text: $user_login.email)
+                        .padding(.horizontal)
+                        .frame(width: 300, height: 50)
+                        .background(Color.white)
+                        .cornerRadius(20)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(Color.gray, lineWidth: 3))
+                        .autocapitalization(.none)
+                        .keyboardType(.emailAddress)
+                        .disableAutocorrection(true)
+                        .offset(y: -20)
                     
-                    // to account registration page
+                    // Password field
+                    Image(systemName: "lock.fill")
+                        .foregroundStyle(.gray)
+                        .font(.system(size: 50))
+                        .offset(y: -10)
+                    SecureField("Enter Password", text: $user_login.password)
+                        .padding(.horizontal)
+                        .frame(width: 300, height: 50)
+                        .background(Color.white)
+                        .cornerRadius(20)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(Color.gray, lineWidth: 3))
+                        .offset(y: -10)
+                    
+                    // Login Button
+                    Button {
+                        user_login.Login()
+                        
+                    } label: {
+                        Text("Login  ➜")
+                            .padding(.horizontal)
+                            .frame(width: 160, height: 50)
+                            .foregroundStyle(.white)
+                            .font(.system(size: 25))
+                            .background(Color.themeColor)
+                            .cornerRadius(20)
+                            .bold()
+                            .offset(y: 15)
+                    }
+                    
+                    // to Create_Account_Screen page
                     HStack {
                         Text("Don't have an account?")
                             .foregroundColor(.gray)
+                            .font(.system(size: 15))
                         NavigationLink(destination: Create_Account_Screen(),
                                        label: {
                             Text("Sign Up")
                                 .underline()
                                 .foregroundStyle(Color.themeColor)
+                                .font(.system(size: 15))
                         })
                     }
+                    .offset(y: 90)
                     
                     Spacer()
                     
@@ -48,7 +102,6 @@ struct Login_Screen: View {
                         .frame(height: 2)
                         .background(Color.gray)
                         .padding(.bottom, 20)
-                    
                     // bottom icons, navigation
                     HStack {
                         Spacer()

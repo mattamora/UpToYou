@@ -33,10 +33,10 @@ struct Create_Account_Screen: View {
                             .padding(.horizontal)
                             .frame(width: 300, height: 50)
                             .background(Color.white) // Gives it a visible background
-                            .cornerRadius(10) // Rounds the edges
+                            .cornerRadius(20) // Rounds the edges
                             .overlay(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .stroke(Color.gray, lineWidth: 2) // Adds a border
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(Color.gray, lineWidth: 3) // Adds a border
                             )
 
                         Image(systemName: "envelope.fill")
@@ -47,17 +47,15 @@ struct Create_Account_Screen: View {
                             .padding(.horizontal)
                             .frame(width: 300, height: 50)
                             .background(Color.white) // Gives it a visible background
-                            .cornerRadius(10) // Rounds the edges
+                            .cornerRadius(20) // Rounds the edges
                             .overlay(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .stroke(Color.gray, lineWidth: 2) // Adds a border
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(Color.gray, lineWidth: 3) // Adds a border
                             )
                             .autocapitalization(.none)
                             .keyboardType(.emailAddress)
                             .disableAutocorrection(true)
                             .offset(y: 40)
-
-                            
 
                         Image(systemName: "lock.fill")
                             .foregroundStyle(.gray)
@@ -67,10 +65,10 @@ struct Create_Account_Screen: View {
                             .padding(.horizontal)
                             .frame(width: 300, height: 50)
                             .background(Color.white) // Gives it a visible background
-                            .cornerRadius(10) // Rounds the edges
+                            .cornerRadius(20) // Rounds the edges
                             .overlay(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .stroke(Color.gray, lineWidth: 2) // Adds a border
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(Color.gray, lineWidth: 3) // Adds a border
                             )
                             .offset(y: 70)
                         
@@ -82,11 +80,10 @@ struct Create_Account_Screen: View {
                                 .frame(width: 160, height: 50)
                                 .foregroundStyle(.white)
                                 .font(.system(size: 25))
-                                .background(Color.themeColor) // Gives it a visible background
-                                .cornerRadius(10)
+                                .background(Color.themeColor)
+                                .cornerRadius(20)
                                 .bold()
-                                .offset(x: 50, y: 100)
-                                
+                                .offset(y: 100)
                         }
                         
                     } // end of form VStack

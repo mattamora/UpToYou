@@ -90,7 +90,7 @@ struct Home_Screen: View {
                             .navigationBarBackButtonHidden(true)
                     }
                     .navigationDestination(isPresented: $toProfile_Screen) {
-                        Profile_Screen()
+                        Login_Screen() // change back to Profile_Screen
                             .navigationBarBackButtonHidden(true)
                     }
                     .navigationDestination(isPresented: $toShuffle_Screen) {

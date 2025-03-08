@@ -28,17 +28,6 @@ struct Profile_Screen: View {
                     
                     Spacer()
                     
-                    // to account registration page
-                    HStack {
-                        Text("Don't have an account?")
-                            .foregroundColor(.gray)
-                        NavigationLink(destination: Create_Account_Screen(),
-                                       label: {
-                            Text("Sign Up")
-                                .underline()
-                                .foregroundStyle(Color.themeColor)
-                        })
-                    }
                     
                     Spacer()
                     
