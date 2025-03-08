@@ -1,13 +1,13 @@
 //
-//  Profile_Screen.swift
+//  Login_Screen.swift
 //  UpToYou
 //
-//  Created by Matthew Amora on 3/1/25.
+//  Created by Matthew Amora on 3/7/25.
 //
 
 import SwiftUI
 
-struct Profile_Screen: View {
+struct Login_Screen: View {
     
     // Navigation Purposes, no need for Profile_Screen
     @State private var toHome_Screen = false
@@ -22,9 +22,11 @@ struct Profile_Screen: View {
                 Color.mainColor.ignoresSafeArea()
                 
                 VStack {
-                    
-                    Text("Profile")
-                        .foregroundColor(.gray)
+                    Text("Login")
+                        .foregroundStyle(.gray)
+                        .font(.system(size: 50))
+                        .bold()
+                        .offset(y: 80)
                     
                     Spacer()
                     
@@ -126,5 +128,5 @@ struct Profile_Screen: View {
 } // end of Profile view
 
 #Preview {
-    Profile_Screen()
+    Login_Screen()
 }

@@ -15,7 +15,6 @@ struct Home_Screen: View {
     @State private var toShuffle_Screen = false
     @State private var toFavorites_Screen = false
     
-
     
     var body: some View {
         NavigationStack {
@@ -102,9 +101,7 @@ struct Home_Screen: View {
                         Favorites_Screen()
                             .navigationBarBackButtonHidden(true)
                     }
-                    
                 } // end of VStack
-               
             } // end of ZStack
         } // end of Navigation Stack
     } // end of body view

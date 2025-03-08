@@ -11,10 +11,18 @@ import SwiftUI
 
 
 // for login and create an account
-class LoginViewViewModel: ObservableObject {
+// used in Create_Account_Screen
+class LoginViewModel: ObservableObject {
     
     @Published var email = ""
     @Published var password = ""
+    @Published var fullName = ""
     
     init() { }
+    
+    
+    func Login() {
+        
+    }
 }
+
