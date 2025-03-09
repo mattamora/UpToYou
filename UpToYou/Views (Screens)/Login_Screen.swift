@@ -5,6 +5,11 @@
 //  Created by Matthew Amora on 3/7/25.
 //
 
+/*
+NEED TO REMOVE BOTTOM ICONS WHEN APP IS CLOSE
+TO BEING DONE
+*/
+
 import SwiftUI
 
 struct Login_Screen: View {
@@ -30,8 +35,9 @@ struct Login_Screen: View {
                         .font(.system(size: 50))
                         .bold()
                         .offset(y: 40)
-                    
+                     
                     Spacer()
+                    
                     // Email/username field
                     Image(systemName: "envelope.fill")
                         .foregroundStyle(.gray)
@@ -68,7 +74,6 @@ struct Login_Screen: View {
                     // Login Button
                     Button {
                         user_login.Login()
-                        
                     } label: {
                         Text("Login  ➜")
                             .padding(.horizontal)
@@ -175,6 +180,14 @@ struct Login_Screen: View {
                     }
                     
                 } // end of VStack
+                // error message popup for invalid fields
+                if !user_login.errorMessage.isEmpty {
+                    Text(user_login.errorMessage)
+                        .foregroundStyle(Color.red)
+                        .font(.system(size: 30))
+                        .bold()
+                    .offset(y: -240)
+                }
             } // end of ZStack
         } // end of Navigation Stack
     } // end of body view

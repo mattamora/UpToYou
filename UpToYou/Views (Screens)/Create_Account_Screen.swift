@@ -9,7 +9,8 @@ import SwiftUI
 
 struct Create_Account_Screen: View {
     
-    @StateObject var newUser = LoginViewModel()
+    @StateObject var newUser = CreateAccountViewModel()
+    
     
     var body: some View {
         NavigationStack {
@@ -72,8 +73,9 @@ struct Create_Account_Screen: View {
                             )
                             .offset(y: 70)
                         
+                        
                         Button {
-                            
+                            newUser.create_account()
                         } label: {
                             Text("Sign Up  ➜")
                                 .padding(.horizontal)
@@ -83,15 +85,24 @@ struct Create_Account_Screen: View {
                                 .background(Color.themeColor)
                                 .cornerRadius(20)
                                 .bold()
-                                .offset(y: 100)
                         }
+                        .offset(y: 100)
                         
                     } // end of form VStack
-                    .padding() // Adds padding around the whole VStack
-                    .offset(y: -80)
+                    .padding()
+                    .offset(y: -50)
                     
                     Spacer()
                 } // end of VStack
+                
+                // error message popup for invalid fields
+                if !newUser.errorMessage.isEmpty {
+                    Text(newUser.errorMessage)
+                        .foregroundStyle(Color.red)
+                        .font(.system(size: 30))
+                        .bold()
+                    .offset(y: -250)
+                }
             } // end of ZStack
         } // end of navigation stack
     } // end of body view
