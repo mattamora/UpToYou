@@ -5,9 +5,19 @@
 //  Created by Matthew Amora on 2/28/25.
 //
 
-import SwiftUI
+/*
+ REMOVE PUBLIC WHEN DONE WITH SWIFT NOTES AND APP IS CLOSE TO DONE
+ currently using public for this view and its body so that Swift_Notes can access this 
+ */
 
-struct Home_Screen: View {
+import SwiftUI
+import FirebaseAuth
+import FirebaseFirestore
+
+public struct Home_Screen: View {
+    
+    // for checking to see if the user is signed in upon
+    @StateObject var is_Signed_In = SignedInViewModel()
     
     // Navigation Purposes, no need for Home_Screen
     @State private var toList_Screen = false
@@ -15,8 +25,11 @@ struct Home_Screen: View {
     @State private var toShuffle_Screen = false
     @State private var toFavorites_Screen = false
     
+    @State private var showLoginScreen = false
+    @State private var showProfileScreen = false
     
-    var body: some View {
+    
+    public var body: some View {
         NavigationStack {
             ZStack {
                 Color.mainColor.ignoresSafeArea()
@@ -26,6 +39,18 @@ struct Home_Screen: View {
                     Text("Home")
                         .foregroundColor(.gray)
                     
+                    // for shuffle or home screen? UI idea
+                    // Text("What are you in the mood for?")
+                    // then put a search bar
+                    
+                    
+                    NavigationStack {
+                        // to Swift_Notes
+                        NavigationLink(destination: swift_notes_code(),
+                                       label: {Text("to Swift_notes") })
+                        // delete stack or move it when beginning implementation of this screen
+                    }
+    
                     Spacer()
                     
                     Divider()
@@ -90,8 +115,12 @@ struct Home_Screen: View {
                             .navigationBarBackButtonHidden(true)
                     }
                     .navigationDestination(isPresented: $toProfile_Screen) {
-                        Profile_Screen()
-                            .navigationBarBackButtonHidden(true)
+                         if is_Signed_In.isSignedIn, !is_Signed_In.currentUserID.isEmpty {
+                            Profile_Screen()
+                                .navigationBarBackButtonHidden(true)
+                         } else {
+                             Login_Screen()
+                         }
                     }
                     .navigationDestination(isPresented: $toShuffle_Screen) {
                         Shuffle_Screen()

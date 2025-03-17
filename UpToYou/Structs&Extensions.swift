@@ -53,3 +53,32 @@ struct User: Codable {
 
 
 
+
+
+/*
+ Other, simpler way to do the bottom navigation
+ found this out after already having implemented the bottom navigation HStack
+ 
+ TabView {
+     Home_Screen()
+         .tabItem {
+             Label("Home", systemImage: "house")
+         }
+     List_Screen()
+         .tabItem {
+             Label("List", systemImage: "list.bullet.circle.fill")
+         }
+     Shuffle_Screen()
+         .tabItem {
+             Label("Shuffle", systemImage: "arrow.trianglehead.2.clockwise")
+         }
+     Favorites_Screen()
+         .tabItem {
+             Label("Favorites", systemImage: "heart")
+         }
+     Profile_Screen()
+         .tabItem {
+             Label("Profile", systemImage: "person")
+         }
+ }
+ */

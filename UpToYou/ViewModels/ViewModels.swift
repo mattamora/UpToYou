@@ -4,7 +4,7 @@
 //
 //  Created by Matthew Amora on 3/2/25.
 //
-// ViewModel for Profile_Screen, Create_Account_Screen
+// ViewModels, normally should all be in separate files
 // Contains User Info
 
 import SwiftUI
@@ -182,6 +182,7 @@ class CreateAccountViewModel: ObservableObject {
 // for checking if the user is already signed in when the app opens, skips going to the login page when clicking on profile
 class SignedInViewModel: ObservableObject {
     @Published var currentUserID: String = ""
+    @Published var currentUserName: String = ""
     
     private var handler: AuthStateDidChangeListenerHandle?
     
@@ -189,11 +190,24 @@ class SignedInViewModel: ObservableObject {
         self.handler = Auth.auth().addStateDidChangeListener { [weak self]_, user in
             DispatchQueue.main.async {
                 self?.currentUserID = user?.uid ?? ""
+                
+                if let userID = user?.uid {
+                    let database = Firestore.firestore()
+                    database.collection("users").document(userID).getDocument { document, error in
+                        if let document = document, document.exists, let userName = document["name"] as? String {
+                            print("Current user's name: \(userName)")
+                        } else {
+                            print("User data or name not found.")
+                        }
+                    }
+                } else {
+                    print("No user currently signed in.")
+                }
             }
         }
     }
     
     public var isSignedIn: Bool {
-        return Auth.auth().currentUser != nil  // if the use
+        return Auth.auth().currentUser != nil  // returns false if the user is not signed in
     }
 }

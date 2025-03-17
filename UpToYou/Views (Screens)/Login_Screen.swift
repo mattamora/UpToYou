@@ -107,7 +107,7 @@ struct Login_Screen: View {
                         .frame(height: 2)
                         .background(Color.gray)
                         .padding(.bottom, 20)
-                    // bottom icons, navigation
+                    // bottom icons, navigation, remove when app is done
                     HStack {
                         Spacer()
                         VStack {

@@ -43,7 +43,7 @@ struct Create_Account_Screen: View {
                         Image(systemName: "envelope.fill")
                             .foregroundStyle(.gray)
                             .font(.system(size: 50))
-                            .offset(y: 40)
+                            .offset(y: 35)
                         TextField("Email", text: $newUser.email)
                             .padding(.horizontal)
                             .frame(width: 300, height: 50)

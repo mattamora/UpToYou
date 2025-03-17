@@ -26,6 +26,12 @@ struct Profile_Screen: View {
                     Text("Profile")
                         .foregroundColor(.gray)
                     
+                    Text("Logged In")
+                        .foregroundColor(.gray)
+                        .bold()
+                        .offset(y: 20)
+                    
+                    
                     Spacer()
                     
                     
