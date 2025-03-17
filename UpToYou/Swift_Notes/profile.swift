@@ -44,7 +44,6 @@ struct profile: View {
         } // end of main VStack
         .onAppear {
             userViewModel.fetchUser()
-            
             // .onAppear runs a block of code when the view first appears on screen
             // commonly used to fetch data, trigger updates, or perform actions as soon as a view becomes visible
             // fetchUser() retrieves user data from Firestore

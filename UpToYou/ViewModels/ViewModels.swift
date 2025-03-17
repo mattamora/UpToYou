@@ -4,8 +4,7 @@
 //
 //  Created by Matthew Amora on 3/2/25.
 //
-// ViewModels, normally should all be in separate files
-// Contains User Info
+// ViewModels, normally, should all be in separate files
 
 import SwiftUI
 import FirebaseAuth
@@ -30,7 +29,24 @@ class LoginViewModel: ObservableObject {
         }
         
         // Logging in
-        Auth.auth().signIn(withEmail: email, password: password)
+        //Auth.auth().signIn(withEmail: email, password: password)
+        Auth.auth().signIn(withEmail: email, password: password) { result, error in
+            if let error = error {
+                print("Login failed: \(error.localizedDescription)")
+                print("Invalid email or password!")
+                return
+            }
+            
+            guard let user = result?.user else {
+                print("Login error: User object not found")
+                return
+            }
+            
+            print("User logged in successfully! UID: \(user.uid)") // for debugging only
+            
+            // Fetch and print the user's name from Firestore
+            //self?.fetchUserName(userID: user.uid)
+        }
         
     }
     
@@ -53,8 +69,7 @@ class LoginViewModel: ObservableObject {
         }
         
         // makes sure email is has @ and .
-        guard email.contains("@") && email.contains(".")
-        else {
+        guard email.contains("@") && email.contains(".") else {
             errorMessage = "Enter a Valid Email!"
             print("Validation Function Ran with no invalid email") // debug purposes
             // removes error message after 2 seconds
@@ -64,12 +79,12 @@ class LoginViewModel: ObservableObject {
             return false
         }
         
-        print("Validation Function Ran Normally") // for debugging, making sure function works
         return true
     }
     
     
 } // end of LoginViewModel
+
 
 // create a user account, used in Create_Account_Screen
 class CreateAccountViewModel: ObservableObject {
@@ -92,25 +107,22 @@ class CreateAccountViewModel: ObservableObject {
             }
             
             self?.insertUserAccount(ID: userID)
+            
+            // ensure the created account does not get signed in after creation
+            // for some reason creating an account also signs the user in, so I have to sign out after it gets created
+            /*
+            do {
+                try Auth.auth().signOut()
+                print("User signed out after account creation.")
+            } catch {
+                print("Error signing out newly created user: \(error.localizedDescription)")
+            }
+             */
         }
-        
-        print("Account Created")  // for debugging purposes
-        
-        
-        
     }
     
     // inserts user into the firebase database
     private func insertUserAccount(ID: String) {
-        
-        // initializing a new user, uses User struct
-        /*
-        let newUser = User(ID: ID,
-                           name: fullName,
-                           email: email,
-                           joined: Date().timeIntervalSince1970) */
-        
-        let database = Firestore.firestore()
         
         let newUserData: [String: Any] = [ // used to pass in .setData to add to firebase database collection
                 "ID": ID,
@@ -119,15 +131,14 @@ class CreateAccountViewModel: ObservableObject {
                 "joined": Date().timeIntervalSince1970
             ]
         
-        print("Data being sent to Firestore: \(newUserData)") // debugging purposes
-        
-        database.collection("Users")
-            .document(ID)
+        Firestore.firestore()
+            .collection("Users").document(ID)
             .setData(newUserData) { error in
                 if let error = error {
                     print("Firestore error: \(error.localizedDescription)")
                 } else {
                     print("User successfully added to Firestore!")
+                    print("Data being sent to Firestore: \(newUserData)") // debugging purposes
                 }
             } // takes dictionaries as argument, added error handling for collection addition
         
@@ -152,8 +163,7 @@ class CreateAccountViewModel: ObservableObject {
         }
         
         // makes sure email is has @ and .
-        guard email.contains("@") && email.contains(".")
-        else {
+        guard email.contains("@") && email.contains(".") else {
             errorMessage = "Enter a Valid Email!"
     
             // removes error message after 2 seconds
@@ -179,35 +189,97 @@ class CreateAccountViewModel: ObservableObject {
     
 }
 
-// for checking if the user is already signed in when the app opens, skips going to the login page when clicking on profile
-class SignedInViewModel: ObservableObject {
+
+// Home_Screen ViewModel, for everything in the Home Screen
+class HomeScreenViewModel: ObservableObject {
+    init () {}
     @Published var currentUserID: String = ""
     @Published var currentUserName: String = ""
     
-    private var handler: AuthStateDidChangeListenerHandle?
     
-    init () {
-        self.handler = Auth.auth().addStateDidChangeListener { [weak self]_, user in
-            DispatchQueue.main.async {
-                self?.currentUserID = user?.uid ?? ""
-                
-                if let userID = user?.uid {
-                    let database = Firestore.firestore()
-                    database.collection("users").document(userID).getDocument { document, error in
-                        if let document = document, document.exists, let userName = document["name"] as? String {
-                            print("Current user's name: \(userName)")
-                        } else {
-                            print("User data or name not found.")
-                        }
-                    }
-                } else {
-                    print("No user currently signed in.")
+
+}
+
+
+// Profile_Screen ViewModel, for everything related to the Profile Screen
+class ProfileScreenViewModel: ObservableObject {
+    init() {}
+    
+    // user from firestore databse
+    @Published var currentUser: User? = nil
+    
+    // get specific user from firestore
+    func fetchUser() {
+        
+        // function returns if no user is currently signed in
+        guard let userID = Auth.auth().currentUser?.uid else {
+            print("No user is signed in. Stopping fetchUser()") // for debugging only
+            return
+        }
+        
+        
+        // fetches current signed in user
+        Firestore.firestore()
+            .collection("Users").document(userID).getDocument { [weak self] snapshot, error in
+                guard let data = snapshot?.data(), error == nil else {
+                    return
                 }
+                
+                // uses User Struct from structs&extensions file
+                DispatchQueue.main.async {
+                    self?.currentUser = User(ID: data["ID"] as? String ?? "",
+                                      name: data["name"] as? String ?? "",
+                                      email: data["email"] as? String ?? "",
+                                      joined: data["joined"] as? TimeInterval ?? 0)
+                }
+            }
+        
+        print("Fetched user: \(userID)") // for debugging only
+        
+    }
+    
+    // logout functionality
+    func logout() {
+        
+        // for debugging purposes, prints the user being logged out
+        if let userID = Auth.auth().currentUser?.uid {
+            print("Logging out user: \(userID)")  // DEBUGGING ONLY
+        } else {
+            assertionFailure("Unexpected nil: No user logged in")
+        }
+
+        // main logout functionality
+        do {
+            try Auth.auth().signOut()
+            print("User signed out successfully.") // for debugging only
+        } catch let signOutError as NSError {
+            print("Error signing out: \(signOutError.localizedDescription)") // for debugging only
+        }
+
+    }
+    
+}
+
+
+
+
+
+
+// checks if the user is signed in and modifies the variable isSignedIn accordingly
+// used in the UpToYouApp file in the @main struct 
+class AuthViewModel: ObservableObject {
+    @Published var isSignedIn: Bool = false
+    
+    private var authStateListener: AuthStateDidChangeListenerHandle?
+    
+    init() {
+        self.authStateListener = Auth.auth().addStateDidChangeListener { [weak self] _, user in
+            DispatchQueue.main.async {
+                self?.isSignedIn = user != nil
             }
         }
     }
-    
-    public var isSignedIn: Bool {
-        return Auth.auth().currentUser != nil  // returns false if the user is not signed in
-    }
 }
+
+
+

@@ -28,7 +28,7 @@ public struct swift_notes_code: View {
     // public because this struct is public
     public var body: some View {
         NavigationStack {
-            Text("Swift Code Notes and Sample Code")
+            Text("Swift Code Notes with Sample Code")
                 .font(.system(size: 40))
                 .bold()
                 .multilineTextAlignment(.center)

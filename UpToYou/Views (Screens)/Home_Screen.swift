@@ -7,7 +7,7 @@
 
 /*
  REMOVE PUBLIC WHEN DONE WITH SWIFT NOTES AND APP IS CLOSE TO DONE
- currently using public for this view and its body so that Swift_Notes can access this 
+ currently using public for this view and its body so that Swift_Notes can access this
  */
 
 import SwiftUI
@@ -15,16 +15,13 @@ import FirebaseAuth
 import FirebaseFirestore
 
 public struct Home_Screen: View {
+    // @StateObject var HomeViewModel = HomeScreenViewModel()
     
-    // for checking to see if the user is signed in upon
-    @StateObject var is_Signed_In = SignedInViewModel()
-    
-    // Navigation Purposes, no need for Home_Screen
+    // Navigation Purposes, no need for Home_Screen variable
     @State private var toList_Screen = false
     @State private var toProfile_Screen = false
     @State private var toShuffle_Screen = false
     @State private var toFavorites_Screen = false
-    
     @State private var showLoginScreen = false
     @State private var showProfileScreen = false
     
@@ -35,7 +32,7 @@ public struct Home_Screen: View {
                 Color.mainColor.ignoresSafeArea()
                 
                 VStack {
-                    
+                
                     Text("Home")
                         .foregroundColor(.gray)
                     
@@ -43,12 +40,11 @@ public struct Home_Screen: View {
                     // Text("What are you in the mood for?")
                     // then put a search bar
                     
-                    
+                    // to Swift_Notes
+                    // delete stack or move it when beginning implementation of this screen
                     NavigationStack {
-                        // to Swift_Notes
                         NavigationLink(destination: swift_notes_code(),
                                        label: {Text("to Swift_notes") })
-                        // delete stack or move it when beginning implementation of this screen
                     }
     
                     Spacer()
@@ -115,12 +111,8 @@ public struct Home_Screen: View {
                             .navigationBarBackButtonHidden(true)
                     }
                     .navigationDestination(isPresented: $toProfile_Screen) {
-                         if is_Signed_In.isSignedIn, !is_Signed_In.currentUserID.isEmpty {
-                            Profile_Screen()
-                                .navigationBarBackButtonHidden(true)
-                         } else {
-                             Login_Screen()
-                         }
+                        Profile_Screen()
+                            .navigationBarBackButtonHidden(true)
                     }
                     .navigationDestination(isPresented: $toShuffle_Screen) {
                         Shuffle_Screen()

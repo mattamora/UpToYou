@@ -23,12 +23,18 @@ struct UpToYouApp: App {
     // register app delegate for Firebase setup
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     
+    // authentication state tracker, check if a user is logged in
+    @StateObject var authViewModel = AuthViewModel()
     
+    
+    // goes to Login_Screen if no user is logged in, Home_Screen otherwise
     var body: some Scene {
-        
-        // goes to Home_Screen if user is signed in, Login_Screen otherwise
         WindowGroup {
-            Home_Screen()
+            if authViewModel.isSignedIn {
+               Home_Screen()
+           } else {
+               Login_Screen()
+           }
         }
     }
 }

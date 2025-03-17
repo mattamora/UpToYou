@@ -141,10 +141,7 @@ struct Login_Screen: View {
                             Image(systemName: "heart")
                                 .resizable()
                                 .frame(width: 33, height: 33)
-                                .onTapGesture {
-                                    toFavorites_Screen = true
-                                    print("Tapped")
-                                }
+                                .onTapGesture { toFavorites_Screen = true }
                             Text("Favorites")
                                 .font(.caption)
                         }

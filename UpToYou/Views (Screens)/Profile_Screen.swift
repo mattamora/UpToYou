@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct Profile_Screen: View {
+    @StateObject var profileViewModel = ProfileScreenViewModel()
     
     // Navigation Purposes, no need for Profile_Screen
     @State private var toHome_Screen = false
@@ -23,13 +24,40 @@ struct Profile_Screen: View {
                 
                 VStack {
                     
-                    Text("Profile")
-                        .foregroundColor(.gray)
-                    
-                    Text("Logged In")
-                        .foregroundColor(.gray)
-                        .bold()
-                        .offset(y: 20)
+                    VStack {
+                        if let currentUser = profileViewModel.currentUser {
+                            Image(systemName: "person.circle.fill")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 200)
+                            HStack {
+                                Text("Joined on:")
+                                Text(formattedDate(from: currentUser.joined))
+                            }
+                            .foregroundColor(.gray)
+                            HStack {
+                                Text("Name:")
+                                Text(currentUser.name)
+                            }
+                            .foregroundColor(.gray)
+                            HStack {
+                                Text("Email:")
+                                Text(currentUser.email)
+                            }
+                            .foregroundColor(.gray)
+                            
+                            Button {
+                                profileViewModel.logout()
+                            } label : {
+                                Text("Logout")
+                            }
+                        } else {
+                            Text("No user signed in...")
+                                .foregroundColor(.gray)
+                        }
+                        
+                    }
+                    .onAppear { profileViewModel.fetchUser() }
                     
                     
                     Spacer()
@@ -76,10 +104,7 @@ struct Profile_Screen: View {
                             Image(systemName: "heart")
                                 .resizable()
                                 .frame(width: 33, height: 33)
-                                .onTapGesture {
-                                    toFavorites_Screen = true
-                                    print("Tapped")
-                                }
+                                .onTapGesture { toFavorites_Screen = true }
                             Text("Favorites")
                                 .font(.caption)
                         }
@@ -113,7 +138,7 @@ struct Profile_Screen: View {
                         Favorites_Screen()
                             .navigationBarBackButtonHidden(true)
                     }
-                    
+            
                 } // end of VStack
             } // end of ZStack
         } // end of Navigation Stack
