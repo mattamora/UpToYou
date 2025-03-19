@@ -21,16 +21,29 @@ struct Favorites_Screen: View {
                 
                 VStack {
                     
-                    Text("Favorites")
-                        .foregroundColor(.gray)
+                    HStack {
+                        Text("Favorites")
+                            .foregroundColor(.gray)
+                            .font(.system(size: 40))
+                            .fontWeight(.bold)
+                            .offset(x: 30)
+                        Spacer()
+                        Image(systemName: "text.badge.plus")
+                            .resizable()
+                            .frame(width: 33, height: 33)
+                            .foregroundStyle(.gray)
+                            .offset(x: -30)
+                    }
+                    .offset(y: 20)
+                    
+                   
+                    
                     
                     Spacer()
-                    
                     Divider()
                         .frame(height: 2)
                         .background(Color.gray)
                         .padding(.bottom, 20)
-                    
                     // bottom icons, navigation
                     HStack {
                         Spacer()

@@ -268,6 +268,11 @@ class ProfileScreenViewModel: ObservableObject {
 }
 
 
+/*
+class FavoritesScreenViewModel: ObservableObject {
+    
+}
+*/
 
 
 
