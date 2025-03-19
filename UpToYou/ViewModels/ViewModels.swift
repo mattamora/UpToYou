@@ -18,6 +18,7 @@ class LoginViewModel: ObservableObject {
     @Published var password = ""
     @Published var fullName = ""
     @Published var errorMessage = ""
+    @Published var isLoggedIn = false
     
     init() { }
     
@@ -43,6 +44,7 @@ class LoginViewModel: ObservableObject {
             }
             
             print("User logged in successfully! UID: \(user.uid)") // for debugging only
+            self.isLoggedIn = true
             
             // Fetch and print the user's name from Firestore
             //self?.fetchUserName(userID: user.uid)

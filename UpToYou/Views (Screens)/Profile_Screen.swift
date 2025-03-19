@@ -30,34 +30,49 @@ struct Profile_Screen: View {
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
                                 .frame(width: 200)
-                            HStack {
-                                Text("Joined on:")
-                                Text(formattedDate(from: currentUser.joined))
-                            }
-                            .foregroundColor(.gray)
+                                .foregroundStyle(Color.gray)
                             HStack {
                                 Text("Name:")
                                 Text(currentUser.name)
                             }
+                            .font(.system(size: 30))
                             .foregroundColor(.gray)
+                            .offset(y: 30)
                             HStack {
                                 Text("Email:")
                                 Text(currentUser.email)
+                                    .underline()
                             }
+                            .font(.system(size: 30))
                             .foregroundColor(.gray)
-                            
+                            .offset(y: 50)
+                            HStack {
+                                Text("Joined on:")
+                                Text(formattedDate(from: currentUser.joined))
+                            }
+                            .font(.system(size: 15))
+                            .foregroundColor(.gray)
+                            .offset(y: 70)
                             Button {
                                 profileViewModel.logout()
                             } label : {
                                 Text("Logout")
+                                    .padding(.horizontal)
+                                    .frame(width: 200, height: 70)
+                                    .foregroundStyle(.white)
+                                    .font(.system(size: 30))
+                                    .background(Color.themeColor)
+                                    .cornerRadius(20)
+                                    .bold()
+                                    .offset(y: 120)
                             }
                         } else {
-                            Text("No user signed in...")
-                                .foregroundColor(.gray)
+                            Text("Loading Profile Screen...")
+                                .foregroundColor(Color.mainColor)
                         }
-                        
                     }
                     .onAppear { profileViewModel.fetchUser() }
+                    .offset(y: 50)
                     
                     
                     Spacer()

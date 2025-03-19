@@ -14,12 +14,6 @@ import SwiftUI
 
 struct Login_Screen: View {
     
-    // Navigation Purposes, no need for Profile_Screen
-    @State private var toHome_Screen = false
-    @State private var toList_Screen = false
-    @State private var toShuffle_Screen = false
-    @State private var toFavorites_Screen = false
-    
     // For account login, info
     @StateObject var user_login = LoginViewModel()
     
@@ -41,11 +35,11 @@ struct Login_Screen: View {
                     // Email/username field
                     Image(systemName: "envelope.fill")
                         .foregroundStyle(.gray)
-                        .font(.system(size: 50))
-                        .offset(y: -25)
+                        .font(.system(size: 60))
+                        .offset(y: -30)
                     TextField("Email", text: $user_login.email)
                         .padding(.horizontal)
-                        .frame(width: 300, height: 50)
+                        .frame(width: 300, height: 70)
                         .background(Color.white)
                         .cornerRadius(20)
                         .overlay(
@@ -54,16 +48,16 @@ struct Login_Screen: View {
                         .autocapitalization(.none)
                         .keyboardType(.emailAddress)
                         .disableAutocorrection(true)
-                        .offset(y: -20)
+                        .offset(y: -25)
                     
                     // Password field
                     Image(systemName: "lock.fill")
                         .foregroundStyle(.gray)
-                        .font(.system(size: 50))
+                        .font(.system(size: 60))
                         .offset(y: -10)
                     SecureField("Enter Password", text: $user_login.password)
                         .padding(.horizontal)
-                        .frame(width: 300, height: 50)
+                        .frame(width: 300, height: 70)
                         .background(Color.white)
                         .cornerRadius(20)
                         .overlay(
@@ -77,13 +71,17 @@ struct Login_Screen: View {
                     } label: {
                         Text("Login  ➜")
                             .padding(.horizontal)
-                            .frame(width: 160, height: 50)
+                            .frame(width: 200, height: 70)
                             .foregroundStyle(.white)
                             .font(.system(size: 25))
                             .background(Color.themeColor)
                             .cornerRadius(20)
                             .bold()
-                            .offset(y: 15)
+                            .offset(y: 20)
+                    }
+                    .navigationDestination(isPresented: $user_login.isLoggedIn) {
+                        Profile_Screen()
+                            .navigationBarBackButtonHidden(true)
                     }
                     
                     // to Create_Account_Screen page
@@ -102,81 +100,9 @@ struct Login_Screen: View {
                     .offset(y: 90)
                     
                     Spacer()
-                    
-                    Divider()
-                        .frame(height: 2)
-                        .background(Color.gray)
-                        .padding(.bottom, 20)
-                    // bottom icons, navigation, remove when app is done
-                    HStack {
-                        Spacer()
-                        VStack {
-                            Image(systemName: "house")
-                                .resizable()
-                                .frame(width: 33, height: 33)
-                                .onTapGesture {toHome_Screen = true}
-                            Text("Home")
-                                .font(.caption)
-                        }
-                        Spacer()
-                        VStack {
-                            Image(systemName: "list.bullet.circle")
-                                .resizable()
-                                .frame(width: 33, height: 33)
-                                .onTapGesture {toList_Screen = true}
-                            Text("List")
-                                .font(.caption)
-                        }
-                        Spacer()
-                        VStack {
-                            Image(systemName: "arrow.trianglehead.2.clockwise")
-                                .resizable()
-                                .frame(width: 33, height: 33)
-                                .onTapGesture {toShuffle_Screen = true}
-                            Text("Shuffle")
-                                .font(.caption)
-                        }
-                        Spacer()
-                        VStack {
-                            Image(systemName: "heart")
-                                .resizable()
-                                .frame(width: 33, height: 33)
-                                .onTapGesture { toFavorites_Screen = true }
-                            Text("Favorites")
-                                .font(.caption)
-                        }
-                        Spacer()
-                        VStack {
-                            Image(systemName: "person.fill")
-                                .resizable()
-                                .frame(width: 33, height: 33)
-                            Text("Profile")
-                                .font(.caption)
-                                .underline()
-                                .bold()
-                        }
-                        Spacer()
-                    }
-                    .padding(.bottom, 20)
-                    .foregroundColor(.gray)
-                    .navigationDestination(isPresented: $toHome_Screen) {
-                        Home_Screen()
-                            .navigationBarBackButtonHidden(true)
-                    }
-                    .navigationDestination(isPresented: $toList_Screen) {
-                        List_Screen()
-                            .navigationBarBackButtonHidden(true)
-                    }
-                    .navigationDestination(isPresented: $toShuffle_Screen) {
-                        Shuffle_Screen()
-                            .navigationBarBackButtonHidden(true)
-                    }
-                    .navigationDestination(isPresented: $toFavorites_Screen) {
-                        Favorites_Screen()
-                            .navigationBarBackButtonHidden(true)
-                    }
-                    
+                
                 } // end of VStack
+                
                 // error message popup for invalid fields
                 if !user_login.errorMessage.isEmpty {
                     Text(user_login.errorMessage)
