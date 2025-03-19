@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		77ACB4B62D74EA80003AA09B /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 77ACB4B52D74EA80003AA09B /* FirebaseAuth */; };
 		77ACB4B82D74EA80003AA09B /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 77ACB4B72D74EA80003AA09B /* FirebaseFirestore */; };
-		77ACB4CE2D750FC9003AA09B /* Launch Screen 2.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 77ACB4BD2D750FC9003AA09B /* Launch Screen 2.storyboard */; };
+		77ACB4CE2D750FC9003AA09B /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 77ACB4BD2D750FC9003AA09B /* LaunchScreen.storyboard */; };
 		77ACB4DE2D756213003AA09B /* Roboto.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 77ACB4DD2D756212003AA09B /* Roboto.ttf */; };
 /* End PBXBuildFile section */
 
@@ -34,13 +34,26 @@
 		7721890C2D728DCA00BCDBF3 /* UpToYou.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = UpToYou.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7721891C2D728DD300BCDBF3 /* UpToYouTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UpToYouTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		772189262D728DD300BCDBF3 /* UpToYouUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UpToYouUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		77ACB4BD2D750FC9003AA09B /* Launch Screen 2.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = "Launch Screen 2.storyboard"; sourceTree = "<group>"; };
+		77ACB4BD2D750FC9003AA09B /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		77ACB4DD2D756212003AA09B /* Roboto.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Roboto.ttf; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		4BD6DBD82D8A46C0003B6362 /* Exceptions for "UpToYou" folder in "UpToYou" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 7721890B2D728DCA00BCDBF3 /* UpToYou */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		7721890E2D728DCA00BCDBF3 /* UpToYou */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				4BD6DBD82D8A46C0003B6362 /* Exceptions for "UpToYou" folder in "UpToYou" target */,
+			);
 			path = UpToYou;
 			sourceTree = "<group>";
 		};
@@ -87,7 +100,7 @@
 			isa = PBXGroup;
 			children = (
 				77ACB4DD2D756212003AA09B /* Roboto.ttf */,
-				77ACB4BD2D750FC9003AA09B /* Launch Screen 2.storyboard */,
+				77ACB4BD2D750FC9003AA09B /* LaunchScreen.storyboard */,
 				7721890E2D728DCA00BCDBF3 /* UpToYou */,
 				7721891F2D728DD300BCDBF3 /* UpToYouTests */,
 				772189292D728DD300BCDBF3 /* UpToYouUITests */,
@@ -231,7 +244,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				77ACB4DE2D756213003AA09B /* Roboto.ttf in Resources */,
-				77ACB4CE2D750FC9003AA09B /* Launch Screen 2.storyboard in Resources */,
+				77ACB4CE2D750FC9003AA09B /* LaunchScreen.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -419,11 +432,12 @@
 				DEVELOPMENT_ASSET_PATHS = "\"UpToYou/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = UpToYou/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -448,11 +462,12 @@
 				DEVELOPMENT_ASSET_PATHS = "\"UpToYou/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = UpToYou/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

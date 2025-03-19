@@ -107,17 +107,22 @@ class CreateAccountViewModel: ObservableObject {
             }
             
             self?.insertUserAccount(ID: userID)
-            
-            // ensure the created account does not get signed in after creation
-            // for some reason creating an account also signs the user in, so I have to sign out after it gets created
-            /*
-            do {
-                try Auth.auth().signOut()
-                print("User signed out after account creation.")
-            } catch {
-                print("Error signing out newly created user: \(error.localizedDescription)")
-            }
-             */
+
+        }
+        
+        // removes message after 2 seconds, for successful account creation
+        errorMessage = "Account Created!"
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            self.errorMessage = ""
+        }
+        
+        // ensure the created account does not get signed in after creation
+        // for some reason creating an account also signs the user in, so I have to sign out after it gets created
+        do {
+            try Auth.auth().signOut()
+            print("User signed out after account creation.")
+        } catch {
+            print("Error signing out newly created user: \(error.localizedDescription)")
         }
     }
     
@@ -251,9 +256,9 @@ class ProfileScreenViewModel: ObservableObject {
         // main logout functionality
         do {
             try Auth.auth().signOut()
-            print("User signed out successfully.") // for debugging only
+            print("User Logged out successfully.") // for debugging only
         } catch let signOutError as NSError {
-            print("Error signing out: \(signOutError.localizedDescription)") // for debugging only
+            print("Error Logging out: \(signOutError.localizedDescription)") // for debugging only
         }
 
     }

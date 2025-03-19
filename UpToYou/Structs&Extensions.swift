@@ -15,6 +15,7 @@ import FirebaseFirestore
 extension Color {
     static let mainColor = Color(hue: 1.0, saturation: 0.183, brightness: 0.092) // app background color
     static let themeColor = Color(red: 218/255, green: 58/255, blue: 56/255) // logo red color
+    static let shadowColor = Color(red: 160/255, green: 20/255, blue: 20/255) // logo shadow color
 }
 
 // maakes struct User info into a dictionary, used to simplify storing user data into firebase, .setData( used for this ), does not work well so currently not using this. Supposed to be used in Login_SignUp file in create_account() funtion
