@@ -28,8 +28,12 @@ struct Favorite_Item: View {
                         .bold()
                         .font(.system(size: 30))
                         .foregroundColor(.white)
-                        .offset(y: -5)
+                        .offset(y: 8)
 
+                    StarRatingView(rating: item.rating)
+                        .offset(y: -7)
+                    
+                    /*
                     HStack(spacing: 1) {
                         Image(systemName: "star.fill")
                         Image(systemName: "star.fill")
@@ -40,9 +44,10 @@ struct Favorite_Item: View {
                     .font(.system(size: 9))
                     .foregroundColor(.yellow)
                     .offset(y: -4)
-
+*/
+                     
                     Text(item.location) // ← Dynamic location
-                        .offset(y: 1)
+                        .offset(y: -7)
                         .foregroundColor(.white)
                 }
                 
@@ -65,7 +70,8 @@ struct Favorite_Item: View {
         ID: "testID",
         restoName: "Cava",
         location: "La Habra, CA",
-        picture: "CAVA"
+        picture: "CAVA",
+        rating: 2.5
     ))
 }
 

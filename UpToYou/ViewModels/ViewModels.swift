@@ -287,6 +287,7 @@ class ListScreenViewModel: ObservableObject {
     @Published var restoName = ""  // Restaurant Name
     @Published var location = ""  // location  city,state format, ex. La Habra, CA    Los Angeles, CA
     @Published var picture = ""  // image name, picture of restaurant  Image("")
+    @Published var ratingInput = "" // rating of restaurant 0.0-5.0, number of stars to show
     
     init() {}
     
@@ -299,8 +300,12 @@ class ListScreenViewModel: ObservableObject {
             return
         }
         
-        
-        
+        // restaurant rating
+        guard let rating = Double(ratingInput), rating >= 0.0, rating <= 5.0 else {
+            print("Invalid rating. Enter a number between 0.0 and 5.0.") //  Validation
+            return
+        }
+
         // get current user id
         // Auth.auth() is from Firebase Authentication, used to manage user sign-in states
         // Each Firebase user has a unique identifier called a User ID (UID), currentUser?.uid tries to access the user's UID,
@@ -319,7 +324,8 @@ class ListScreenViewModel: ObservableObject {
         let newItem = FavoriteItemModel(ID: newID,
                                         restoName: restoName,  // restaurant name
                                         location: location,  // location  city, state
-                                        picture: picture)  // image name from assets
+                                        picture: picture,
+                                        rating: rating)  // image name from assets
         
         
         
@@ -363,6 +369,11 @@ class ListScreenViewModel: ObservableObject {
         guard !picture.trimmingCharacters(in: .whitespaces).isEmpty else {
             return false
         }
+        
+        guard !ratingInput.trimmingCharacters(in: .whitespaces).isEmpty else {
+            return false
+        }
+       
         
         return true
     }

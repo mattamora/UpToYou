@@ -58,6 +58,7 @@ struct FavoriteItemModel: Codable {
     let restoName: String
     let location: String
     let picture: String
+    let rating: Double // rating property (0.0 to 5.0), used for stars
 }
 
 /*

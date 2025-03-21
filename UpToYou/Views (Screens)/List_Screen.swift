@@ -38,6 +38,9 @@ struct List_Screen: View {
                             TextField("Sample Restaurant", text:$listViewModel.restoName)
                             TextField("Sample Picture", text:$listViewModel.picture)
                             TextField("Sample Location", text:$listViewModel.location)
+                            TextField("Rating (0.0 - 5.0)", text: $listViewModel.ratingInput)
+                                    .keyboardType(.decimalPad) // Show number keyboard
+                            
                             
                             Button {
                                 listViewModel.saveToFirebase()
