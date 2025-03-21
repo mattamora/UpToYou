@@ -60,7 +60,6 @@ struct FavoriteItemModel: Codable {
     let picture: String
 }
 
-
 /*
  Other, simpler way to do the bottom navigation
  found this out after already having implemented the bottom navigation HStack

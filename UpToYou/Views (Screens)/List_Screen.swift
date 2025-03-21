@@ -122,7 +122,7 @@ struct List_Screen: View {
                             .navigationBarBackButtonHidden(true)
                     }
                     .navigationDestination(isPresented: $toFavorites_Screen) {
-                        Favorites_Screen()
+                        Favorites_Screen(userID: "7fnIEM2FyMY6LaTreBpAwGb3Jyg1")
                             .navigationBarBackButtonHidden(true)
                     }
                     

@@ -18,15 +18,12 @@ struct Favorites_Screen: View {
     @StateObject var faveViewModel = FavoritesScreenViewModel()
     
     // sample favorite items, for testing UI
-    
-    /*
     @FirestoreQuery var faveItems: [FavoriteItemModel]
     let userID: String
     init(userID: String) {
         self.userID = userID
         self._faveItems = FirestoreQuery(collectionPath: "Users/\(userID)/Sample Favorites")
     }
-     */
     // for testing and visual checks only
     /*let favoriteItems = [
            FavoriteItemModel(name: "Cava", location: "La Habra, CA"),
@@ -55,37 +52,37 @@ struct Favorites_Screen: View {
                             .offset(x: -30)
                     }
                     .offset(y: 20)
+                    Divider()
+                        .frame(height: 1)
+                        .background(Color.gray)
+                        .offset(y: 10)
                     
-                    /*
-                    // for showing sample items
                     List(faveItems, id: \.ID) { item in
-                        VStack(alignment: .leading) {
-                            Text(item.title)
-                                .font(.headline)
-                            Text(item.actualData)
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
-                        }
+                        Favorite_Item(item: item)
+                            .listRowInsets(EdgeInsets()) // Removes default List padding
+                            .frame(maxWidth: .infinity) // Forces full width
+                            .listRowSeparatorTint(.white, edges: .bottom)
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) {
-                                // code to delete this item from firebase
                                 Firestore.firestore()
-                                        .collection("Users").document(userID)
-                                        .collection("Sample Favorites").document(item.ID)
-                                        .delete() { error in
-                                            if let error = error {
-                                                // for debugging only
-                                                print("Error deleting document: \(error.localizedDescription)")
-                                            } else {
-                                                print("Item deleted successfully.") // for debugging only
-                                            }
+                                    .collection("Users").document(userID)
+                                    .collection("Sample Favorites").document(item.ID)
+                                    .delete() { error in
+                                        if let error = error {
+                                            print("Error deleting document: \(error.localizedDescription)")
+                                        } else {
+                                            print("Item deleted successfully.")
                                         }
+                                    }
                             } label: {
                                 Label("Delete", systemImage: "trash")
                             }
                         }
                     }
-                   */
+                    .scrollContentBackground(.hidden)
+                    .padding(.top, -20)
+                    // .listStyle(.plain) // 🔹 Optional: Removes extra padding in grouped lists
+
                     
                     
                     Spacer()
@@ -170,5 +167,5 @@ struct Favorites_Screen: View {
 } // end of Profile view
 
 #Preview {
-    Favorites_Screen(/*userID: "7fnIEM2FyMY6LaTreBpAwGb3Jyg1"*/)
+    Favorites_Screen(userID: "7fnIEM2FyMY6LaTreBpAwGb3Jyg1")
 }
