@@ -23,7 +23,7 @@ struct UpToYouApp: App {
     // register app delegate for Firebase setup
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     
-    // authentication state tracker, check if a user is logged in
+    // authentication state tracker, check if a user is logged in, globally across all files
     @StateObject var authViewModel = AuthViewModel()
     
     

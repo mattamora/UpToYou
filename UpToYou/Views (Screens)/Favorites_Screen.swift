@@ -4,6 +4,7 @@
 //
 //  Created by Matthew Amora on 3/1/25.
 //
+import FirebaseFirestore
 import SwiftUI
 
 struct Favorites_Screen: View {
@@ -13,6 +14,25 @@ struct Favorites_Screen: View {
     @State private var toList_Screen = false
     @State private var toShuffle_Screen = false
     @State private var toProfile_Screen = false
+    
+    @StateObject var faveViewModel = FavoritesScreenViewModel()
+    
+    // sample favorite items, for testing UI
+    
+    /*
+    @FirestoreQuery var faveItems: [FavoriteItemModel]
+    let userID: String
+    init(userID: String) {
+        self.userID = userID
+        self._faveItems = FirestoreQuery(collectionPath: "Users/\(userID)/Sample Favorites")
+    }
+     */
+    // for testing and visual checks only
+    /*let favoriteItems = [
+           FavoriteItemModel(name: "Cava", location: "La Habra, CA"),
+           FavoriteItemModel(name: "Chipotle", location: "Los Angeles, CA"),
+           FavoriteItemModel(name: "In-N-Out", location: "Anaheim, CA")
+       ]*/
     
     var body: some View {
         NavigationStack {
@@ -36,7 +56,36 @@ struct Favorites_Screen: View {
                     }
                     .offset(y: 20)
                     
-                   
+                    /*
+                    // for showing sample items
+                    List(faveItems, id: \.ID) { item in
+                        VStack(alignment: .leading) {
+                            Text(item.title)
+                                .font(.headline)
+                            Text(item.actualData)
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                        }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                // code to delete this item from firebase
+                                Firestore.firestore()
+                                        .collection("Users").document(userID)
+                                        .collection("Sample Favorites").document(item.ID)
+                                        .delete() { error in
+                                            if let error = error {
+                                                // for debugging only
+                                                print("Error deleting document: \(error.localizedDescription)")
+                                            } else {
+                                                print("Item deleted successfully.") // for debugging only
+                                            }
+                                        }
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                    }
+                   */
                     
                     
                     Spacer()
@@ -121,5 +170,5 @@ struct Favorites_Screen: View {
 } // end of Profile view
 
 #Preview {
-    Favorites_Screen()
+    Favorites_Screen(/*userID: "7fnIEM2FyMY6LaTreBpAwGb3Jyg1"*/)
 }

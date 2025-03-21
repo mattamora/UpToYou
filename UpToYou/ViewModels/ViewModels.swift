@@ -215,6 +215,9 @@ class ProfileScreenViewModel: ObservableObject {
     // user from firestore databse
     @Published var currentUser: User? = nil
     
+    // logged in or not
+    @Published var isLoggedOut = false
+    
     // get specific user from firestore
     func fetchUser() {
         
@@ -262,17 +265,109 @@ class ProfileScreenViewModel: ObservableObject {
         } catch let signOutError as NSError {
             print("Error Logging out: \(signOutError.localizedDescription)") // for debugging only
         }
+        
+        self.isLoggedOut = true
 
     }
     
 }
 
-
-/*
+// Favorites_Screen ViewModel
 class FavoritesScreenViewModel: ObservableObject {
     
+    
+    init() {}
+    
 }
-*/
+
+
+// List_Screen ViewModel
+class ListScreenViewModel: ObservableObject {
+    // for now using this to add an item to favorites
+    @Published var restoName = ""  // Restaurant Name
+    @Published var location = ""  // location  city,state format, ex. La Habra, CA    Los Angeles, CA
+    @Published var picture = ""  // image name, picture of restaurant  Image("")
+    
+    init() {}
+    
+    // saves data to firebase collection
+    func saveToFirebase() {
+        
+        // makes sure there is data by calling canSave variable
+        guard canSave else {
+            print("Empty data fields") // for debugging only
+            return
+        }
+        
+        
+        
+        // get current user id
+        // Auth.auth() is from Firebase Authentication, used to manage user sign-in states
+        // Each Firebase user has a unique identifier called a User ID (UID), currentUser?.uid tries to access the user's UID,
+        // ? is used because if there's no user signed in (currentUser is nil), this safely returns nil instead of causing a crash.
+        guard let userID = Auth.auth().currentUser?.uid else {
+            print("No user is signed in. Stopping function.") // for debugging only
+            return
+        }
+        print("User is signed in with ID: \(userID)") // for debugging only
+        
+        
+        
+        // create a model for the data to be added into the collection
+        // UUID() generates a completely unique identifier (UUID)
+        let newID = UUID().uuidString   // every time this line runs, it gives you a brand new, unique string that can never repeat
+        let newItem = FavoriteItemModel(ID: newID,
+                                        restoName: restoName,  // restaurant name
+                                        location: location,  // location  city, state
+                                        picture: picture)  // image name from assets
+        
+        
+        
+        // saves data into a firebase collection
+        do {
+            // convert newItem to dictionary format
+            let dataDictionary = try DictionaryEncoder().encode(newItem)
+            
+            // Firestore.firestore() initializes and provides a reference to your Firestore database, connects your app to your Firestore database hosted by Firebase
+            // collection in Firestore is like a folder that stores multiple documents.
+            // a document in Firestore stores data in key-value pairs
+            // Firestore supports nesting collections inside documents, called sub-collections
+            Firestore.firestore()
+                .collection("Users")   // collection of users, access or create (if it doesn’t already exist) a collection named "users"
+                .document(userID)          // specific user, .document(userID) retrieves a specific document inside the collection, userID in this case
+                .collection("Sample Favorites") // sub-collection in a specific user, another smaller folder within that user's specific document
+                .document(newID)           // new data within the "Sample Data" sub-collection, If it doesn't exist, Firestore will automatically create it
+                .setData(dataDictionary) { error in // creates or overwrites the document data with the data provided
+                    if let error = error {
+                        print("Error saving data: \(error.localizedDescription)")
+                    } else {
+                        print("Data successfully saved with ID: \(newID)")
+                    }
+                }
+        } catch {
+            print("Error encoding newData: \(error.localizedDescription)")  // for debugging only
+        }
+        
+    } // end of saveToFirebase()
+    
+    // to maake sure data form is not empty
+    var canSave: Bool {
+        guard !restoName.trimmingCharacters(in: .whitespaces).isEmpty else {
+            return false
+        }
+        
+        guard !location.trimmingCharacters(in: .whitespaces).isEmpty else {
+            return false
+        }
+        
+        guard !picture.trimmingCharacters(in: .whitespaces).isEmpty else {
+            return false
+        }
+        
+        return true
+    }
+    
+}
 
 
 

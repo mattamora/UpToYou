@@ -52,8 +52,13 @@ struct User: Codable {
     let joined: TimeInterval // when the user signed up or made an account
 }
 
-
-
+// an item in the favorites
+struct FavoriteItemModel: Codable {
+    let ID: String // = UUID() // Unique ID for each item, dont use this for now
+    let restoName: String
+    let location: String
+    let picture: String
+}
 
 
 /*

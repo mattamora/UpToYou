@@ -64,8 +64,8 @@ struct Profile_Screen: View {
                                     .background(Color.themeColor)
                                     .cornerRadius(20)
                                     .bold()
-                                    .offset(y: 120)
                             }
+                            .padding(.top, 120)
                         } else {
                             Text("Loading Profile Screen...")
                                 .foregroundColor(Color.mainColor)
@@ -73,6 +73,12 @@ struct Profile_Screen: View {
                     }
                     .onAppear { profileViewModel.fetchUser() }
                     .offset(y: 50)
+                    .navigationDestination(isPresented: $profileViewModel.isLoggedOut) {
+                        Login_Screen()
+                            .navigationBarBackButtonHidden(true)
+                    }
+                    
+                    
                     
                     
                     Spacer()
