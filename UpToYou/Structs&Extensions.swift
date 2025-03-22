@@ -19,40 +19,49 @@ extension Color {
     static let shadowColor = Color(red: 160/255, green: 20/255, blue: 20/255) // logo shadow color
 }
 
-// for showing location services status, displays locatio status
+// for showing location services status, displays location status
 extension CLAuthorizationStatus {
     var description: String {
         switch self {
         case .notDetermined: return "Not Determined"
         case .restricted: return "Restricted"
-        case .denied: return "Denied"
-        case .authorizedAlways: return "Authorized Always"
-        case .authorizedWhenInUse: return "Authorized When In Use"
+        case .denied: return "Do Not Allow"
+        case .authorizedAlways: return "Always Allow"
+        case .authorizedWhenInUse: return "Allow while using app"
         @unknown default: return "Unknown"
         }
     }
 }
 
 
-// maakes struct User info into a dictionary, used to simplify storing user data into firebase, .setData( used for this ), does not work well so currently not using this. Supposed to be used in Login_SignUp file in create_account() funtion
-/* extension Encodable {
-    func asDictionary() -> [String: Any] {
-        guard let userData = try? JSONEncoder().encode(self) else {
-            return [:]  // returns an empty dictionary if no data is given
-        }
-        
-        do {
-            let json = try JSONSerialization.jsonObject(with: userData) as? [String: Any]
-            return json ?? [:]
-        } catch {
-            return [:] // returns an empty dictionary if error is found
-        }
-    }
+
+// API stuff
+struct YelpSearchResponse: Decodable {
+    let restos: [Restaurant]
+    
+    
+    // Yelp’s real JSON key is "businesses", not "restos" — so need to fix the mapping.
+    // Decodes the businesses key from the JSON into my restos array.
+    private enum CodingKeys: String, CodingKey {
+           case restos = "businesses"
+       }
 }
-*/
-
-
-
+struct Restaurant: Decodable {
+    let name: String
+    let location: Location
+    let image_url: String?
+    let rating: Double
+    let coordinates: Coordinates
+    let url: String
+}
+struct Location: Decodable {
+    let city: String
+    let state: String
+}
+struct Coordinates: Decodable {
+    let latitude: Double
+    let longitude: Double
+}
 
 // Bottom Icons, used in all main screens
 struct BottomIcons {
@@ -77,6 +86,16 @@ struct FavoriteItemModel: Codable {
     let rating: Double // rating property (0.0 to 5.0), used for stars
 }
 
+
+
+
+
+
+
+
+
+
+// simpler way to do naviagtion between views, should replace bottom icons
 /*
  Other, simpler way to do the bottom navigation
  found this out after already having implemented the bottom navigation HStack
@@ -104,3 +123,20 @@ struct FavoriteItemModel: Codable {
          }
  }
  */
+
+// maakes struct User info into a dictionary, used to simplify storing user data into firebase, .setData( used for this ), does not work well so currently not using this. Supposed to be used in Login_SignUp file in create_account() funtion
+/* extension Encodable {
+    func asDictionary() -> [String: Any] {
+        guard let userData = try? JSONEncoder().encode(self) else {
+            return [:]  // returns an empty dictionary if no data is given
+        }
+        
+        do {
+            let json = try JSONSerialization.jsonObject(with: userData) as? [String: Any]
+            return json ?? [:]
+        } catch {
+            return [:] // returns an empty dictionary if error is found
+        }
+    }
+}
+*/

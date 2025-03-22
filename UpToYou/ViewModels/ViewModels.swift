@@ -98,7 +98,6 @@ class LoginViewModel: ObservableObject {
     
 } // end of LoginViewModel
 
-
 // create a user account, used in Create_Account_Screen
 class CreateAccountViewModel: ObservableObject {
     @Published var email = ""
@@ -207,8 +206,6 @@ class CreateAccountViewModel: ObservableObject {
     
 }
 
-
-// Home_Screen ViewModel, for everything in the Home Screen
 class HomeScreenViewModel: ObservableObject {
     init () {}
     @Published var currentUserID: String = ""
@@ -218,8 +215,6 @@ class HomeScreenViewModel: ObservableObject {
 
 }
 
-
-// Profile_Screen ViewModel, for everything related to the Profile Screen
 class ProfileScreenViewModel: ObservableObject {
     init() {}
     
@@ -283,7 +278,6 @@ class ProfileScreenViewModel: ObservableObject {
     
 }
 
-// Favorites_Screen ViewModel
 class FavoritesScreenViewModel: ObservableObject {
     
     
@@ -291,8 +285,6 @@ class FavoritesScreenViewModel: ObservableObject {
     
 }
 
-
-// List_Screen ViewModel
 class ListScreenViewModel: ObservableObject {
     // for now using this to add an item to favorites
     @Published var restoName = ""  // Restaurant Name
@@ -391,6 +383,56 @@ class ListScreenViewModel: ObservableObject {
     
 }
 
+class ShuffleScreenViewModel: ObservableObject {
+    init() {}
+    
+    @Published var restaurants: [Restaurant] = []
+    @Published var isLoading: Bool = false
+
+    // API stuff, Using Yelp Fusion API to get restaurants(
+    func fetchYelpRestaurants(latitude: Double, longitude: Double) {
+        isLoading = true
+
+        let apiKey = "RWKuG7rNb1kvwTd8FTvofP8B7PZp7JBl4nGbi7Majn-aDCuu9nunUpwA2wn6SvJttitvFORhiJqLjMLIS9-_R1gmw1DmtS7pi4Qob98yAMmDHuuIVGzy7V-i4WzeZ3Yx"
+        let urlString = "https://api.yelp.com/v3/businesses/search?term=food&latitude=\(latitude)&longitude=\(longitude)&limit=10"
+
+        guard let url = URL(string: urlString) else {
+            print("❌ Invalid URL")
+            isLoading = false
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            DispatchQueue.main.async {
+                self.isLoading = false
+            }
+
+            if let error = error {
+                print("Request error: \(error.localizedDescription)")
+                return
+            }
+
+            guard let data = data else {
+                print("No data received")
+                return
+            }
+
+            do {
+                let decodedResponse = try JSONDecoder().decode(YelpSearchResponse.self, from: data)
+                DispatchQueue.main.async {
+                    self.restaurants = decodedResponse.restos
+                }
+
+            } catch {
+                print("Decoding error: \(error.localizedDescription)")
+            }
+        }.resume()
+    }
+}
 
 
 
@@ -413,28 +455,44 @@ class AuthViewModel: ObservableObject {
 
 // asks the user if the app can view their location
 // currently using MapKit and CLLocationManager().requestWhenInUseAuthorization() to ask for location permission
-// this class uses locationManager.requestLocationPermission() for location permission, but will use this later.
-class AllowLocation: NSObject, ObservableObject, CLLocationManagerDelegate {
-    private var locationManager = CLLocationManager()
-    
-    @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
-    
+// manage current location
+class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
+    private let manager = CLLocationManager()
+
+    @Published var userLocation: CLLocationCoordinate2D?
+    @Published var permissionDenied: Bool = false
+
     override init() {
         super.init()
-        locationManager.delegate = self
-        authorizationStatus = locationManager.authorizationStatus
+        manager.delegate = self
+        manager.desiredAccuracy = kCLLocationAccuracyBest
+        checkLocationAuthorization()
     }
 
-    func requestLocationPermission() {
-        locationManager.requestWhenInUseAuthorization()
-    }
-
-    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-        DispatchQueue.main.async {
-            self.authorizationStatus = status
+    func checkLocationAuthorization() {
+        switch manager.authorizationStatus {
+        case .notDetermined:
+            manager.requestWhenInUseAuthorization()
+        case .restricted, .denied:
+            permissionDenied = true
+        case .authorizedWhenInUse, .authorizedAlways:
+            manager.startUpdatingLocation()
+        @unknown default:
+            break
         }
     }
-}
 
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        if let location = locations.last {
+            DispatchQueue.main.async {
+                self.userLocation = location.coordinate
+            }
+        }
+    }
+
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        checkLocationAuthorization()
+    }
+}
 
 

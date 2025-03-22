@@ -6,9 +6,13 @@
 //
 
 import SwiftUI
+import MapKit
 
 struct Profile_Screen: View {
     @StateObject var profileViewModel = ProfileScreenViewModel()
+    
+    // for handling location, viewing current location
+    @StateObject private var locationManager = LocationManager()
     
     // Navigation Purposes, no need for Profile_Screen
     @State private var toHome_Screen = false
@@ -53,6 +57,22 @@ struct Profile_Screen: View {
                             .font(.system(size: 15))
                             .foregroundColor(.gray)
                             .offset(y: 70)
+                            if locationManager.permissionDenied {
+                                 Text("Location access denied. Please enable it in Settings.")
+                                     .foregroundColor(.gray)
+                                     .font(.system(size: 10))
+                                     .offset(y: 70)
+                             } else if let location = locationManager.userLocation {
+                                 Text("Current Location: \(location.latitude), \(location.longitude)")
+                                     .foregroundColor(.gray)
+                                     .font(.system(size: 10))
+                                     .offset(y: 70)
+                             } else {
+                                 Text("Requesting location...")
+                                     .foregroundColor(.gray)
+                                     .font(.system(size: 10))
+                                     .offset(y: 70)
+                             }
                             Button {
                                 profileViewModel.logout()
                             } label : {
@@ -80,18 +100,14 @@ struct Profile_Screen: View {
                     
                     
                     
-                    
                     Spacer()
                     
-                    
+                    // bottom icons, navigation
                     Spacer()
-                    
                     Divider()
                         .frame(height: 2)
                         .background(Color.gray)
                         .padding(.bottom, 20)
-                    
-                    // bottom icons, navigation
                     HStack {
                         Spacer()
                         VStack {
@@ -161,6 +177,11 @@ struct Profile_Screen: View {
                     }
             
                 } // end of VStack
+                .onAppear {
+                   // When the view appears, ask for location permission
+                   // uses import MapKit
+                   locationManager.checkLocationAuthorization()
+               }
             } // end of ZStack
         } // end of Navigation Stack
     } // end of body view

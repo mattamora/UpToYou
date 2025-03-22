@@ -11,15 +11,21 @@ import MapKit
 
 struct Shuffle_Screen: View {
     
+    @StateObject private var ShuffleViewModel = ShuffleScreenViewModel()
+    
+    // for handling location
+    @StateObject private var locationManager = LocationManager()
+    
     // Navigation Purposes, no need for Shuffle_Screen
     @State private var toHome_Screen = false
     @State private var toList_Screen = false
     @State private var toProfile_Screen = false
     @State private var toFavorites_Screen = false
     
-    
-    // for enabling location
-    @StateObject private var locationManager = AllowLocation()
+    // for the distance filter selection
+    @State private var showDistanceSheet = true
+    @State private var selectedDistance: Int = 5
+    let distanceOptions = [5, 10, 15, 20, 25, 35, 50]
 
     
     var body: some View {
@@ -29,15 +35,41 @@ struct Shuffle_Screen: View {
                 
                 VStack {
                     
-                    Text("Shuffle")
-                        .foregroundColor(.gray)
-                    
-                    // location services button
                     Button {
-                        CLLocationManager().requestWhenInUseAuthorization()
-                        //locationManager.requestLocationPermission()
+                        showDistanceSheet = true
                     } label: {
-                        Text("Enable Location")
+                        HStack (spacing: 5) {
+                            Image(systemName: "location")
+                            Text("Within: \(selectedDistance) miles")
+                        }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 16)
+                        .foregroundColor(Color.gray)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(Color.gray, lineWidth: 1)
+                        )
+                        
+                    }
+                    
+                    
+                    /*
+                     Up To You button
+                     this button will randomize restaurants and pick a place to eat for the user.
+                     */
+                    
+                
+                    Button {
+                        if let location = locationManager.userLocation {
+                            ShuffleViewModel.fetchYelpRestaurants(
+                                latitude: location.latitude,
+                                longitude: location.longitude
+                            )
+                        } else {
+                            print("📍 Location not available yet")
+                        }
+                    } label: {
+                        Text("Fetch Nearby Restaurants")
                             .padding()
                             .frame(maxWidth: .infinity)
                             .background(Color.blue)
@@ -45,24 +77,31 @@ struct Shuffle_Screen: View {
                             .cornerRadius(10)
                             .padding()
                     }
-                    Text("Location Permission Status: \(locationManager.authorizationStatus.description)")
-                        .padding()
-                        .foregroundColor(.gray)
+
+                    if ShuffleViewModel.isLoading {
+                        ProgressView("Loading...")
+                    }
+
+                    List(ShuffleViewModel.restaurants, id: \.name) { r in
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text(r.name)
+                                .font(.headline)
+                            Text("⭐️ \(r.rating) — \(r.location.city), \(r.location.state)")
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                        }
+                    }
                     
-                    /*
-                     Up To You button
-                     this button will randomize restaurants and pick a place to eat for the user.
-                     */
+        
                     
                     
                     
+                    // bottom icons, navigation
                     Spacer()
                     Divider()
                         .frame(height: 2)
                         .background(Color.gray)
                         .padding(.bottom, 20)
-                    
-                    // bottom icons, navigation
                     HStack {
                         Spacer()
                         VStack {
@@ -132,7 +171,43 @@ struct Shuffle_Screen: View {
                     }
                     
                 } // end of VStack
-               
+                .sheet(isPresented: $showDistanceSheet) {
+                    VStack(spacing: 16) {
+                        Text("Choose Distance Limit")
+                            .font(.system(size: 35))
+                            .foregroundStyle(.gray)
+                            .bold()
+
+                        Picker("Distance", selection: $selectedDistance) {
+                            ForEach(distanceOptions, id: \.self) { miles in
+                                Text("\(miles) miles").tag(miles)
+                                    .font(.system(size: 30))
+                                    .foregroundStyle(.gray)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.wheel)
+                        .frame(height: 200)
+
+                        Button {
+                            showDistanceSheet = false
+                        } label : {
+                            Text("Done")
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.red)
+                                .foregroundColor(.white)
+                                .cornerRadius(12)
+                                .offset(y: 30)
+                        }
+                     
+                    }
+                    .padding(.horizontal)
+                    .frame(maxHeight: .infinity) // Let it expand
+                    .background(Color.mainColor) // Set the background color
+                    .presentationDetents([.fraction(0.6)]) // Limit sheet height to 50%
+                }
+
             } // end of ZStack
         } // end of Navigation Stack
     } // end of body view
