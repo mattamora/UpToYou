@@ -9,6 +9,7 @@
 import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
+import CoreLocation
 
 
 // for user login, used in Login_Screen
@@ -35,6 +36,7 @@ class LoginViewModel: ObservableObject {
             if let error = error {
                 print("Login failed: \(error.localizedDescription)")
                 print("Invalid email or password!")
+                self.invalid()
                 return
             }
             
@@ -82,6 +84,15 @@ class LoginViewModel: ObservableObject {
         }
         
         return true
+    }
+    
+    // prints error message of an invalid email or password,
+    private func invalid() {
+        errorMessage = "Invalid email or password!"
+        // removes error message after 2 seconds
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            self.errorMessage = ""
+        }
     }
     
     
@@ -395,6 +406,32 @@ class AuthViewModel: ObservableObject {
             DispatchQueue.main.async {
                 self?.isSignedIn = user != nil
             }
+        }
+    }
+}
+
+
+// asks the user if the app can view their location
+// currently using MapKit and CLLocationManager().requestWhenInUseAuthorization() to ask for location permission
+// this class uses locationManager.requestLocationPermission() for location permission, but will use this later.
+class AllowLocation: NSObject, ObservableObject, CLLocationManagerDelegate {
+    private var locationManager = CLLocationManager()
+    
+    @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
+    
+    override init() {
+        super.init()
+        locationManager.delegate = self
+        authorizationStatus = locationManager.authorizationStatus
+    }
+
+    func requestLocationPermission() {
+        locationManager.requestWhenInUseAuthorization()
+    }
+
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        DispatchQueue.main.async {
+            self.authorizationStatus = status
         }
     }
 }

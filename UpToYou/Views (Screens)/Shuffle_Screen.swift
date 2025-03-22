@@ -7,6 +7,7 @@
 
 
 import SwiftUI
+import MapKit
 
 struct Shuffle_Screen: View {
     
@@ -16,8 +17,10 @@ struct Shuffle_Screen: View {
     @State private var toProfile_Screen = false
     @State private var toFavorites_Screen = false
     
-    @State var email = ""
-    @State var password = ""
+    
+    // for enabling location
+    @StateObject private var locationManager = AllowLocation()
+
     
     var body: some View {
         NavigationStack {
@@ -28,9 +31,31 @@ struct Shuffle_Screen: View {
                     
                     Text("Shuffle")
                         .foregroundColor(.gray)
+                
+                    /*
+                     Up To You button
+                     this button will randomize restaurants and pick a place to eat for the user. 
+                     */
+                    VStack {
+                        Button {
+                            CLLocationManager().requestWhenInUseAuthorization()
+                            //locationManager.requestLocationPermission()
+                        } label: {
+                            Text("Enable Location")
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .background(Color.blue)
+                                .foregroundColor(.white)
+                                .cornerRadius(10)
+                                .padding()
+                        }
+        
+                        Text("Location Permission Status: \(locationManager.authorizationStatus.description)")
+                            .padding()
+                            .foregroundColor(.gray)
+                    }
                     
                     Spacer()
-                    
                     Divider()
                         .frame(height: 2)
                         .background(Color.gray)
@@ -97,7 +122,7 @@ struct Shuffle_Screen: View {
                             .navigationBarBackButtonHidden(true)
                     }
                     .navigationDestination(isPresented: $toProfile_Screen) {
-                        Login_Screen() // change back to Profile_Screen
+                        Profile_Screen()
                             .navigationBarBackButtonHidden(true)
                     }
                     .navigationDestination(isPresented: $toFavorites_Screen) {

@@ -22,7 +22,7 @@ public struct Home_Screen: View {
     @State private var toProfile_Screen = false
     @State private var toShuffle_Screen = false
     @State private var toFavorites_Screen = false
-    @State private var showLoginScreen = false
+    //@State private var showLoginScreen = false
     @State private var showProfileScreen = false
     
     
@@ -110,16 +110,16 @@ public struct Home_Screen: View {
                         List_Screen()
                             .navigationBarBackButtonHidden(true)
                     }
-                    .navigationDestination(isPresented: $toProfile_Screen) {
-                        Profile_Screen()
-                            .navigationBarBackButtonHidden(true)
-                    }
                     .navigationDestination(isPresented: $toShuffle_Screen) {
                         Shuffle_Screen()
                             .navigationBarBackButtonHidden(true)
                     }
                     .navigationDestination(isPresented: $toFavorites_Screen) {
                         Favorites_Screen(userID: "7fnIEM2FyMY6LaTreBpAwGb3Jyg1")
+                            .navigationBarBackButtonHidden(true)
+                    }
+                    .navigationDestination(isPresented: $toProfile_Screen) {
+                        Profile_Screen()
                             .navigationBarBackButtonHidden(true)
                     }
                 } // end of VStack

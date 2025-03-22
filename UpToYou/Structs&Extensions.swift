@@ -9,6 +9,7 @@
 import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
+import CoreLocation
 
 
 // main app color, theme color (red)
@@ -17,6 +18,21 @@ extension Color {
     static let themeColor = Color(red: 218/255, green: 58/255, blue: 56/255) // logo red color
     static let shadowColor = Color(red: 160/255, green: 20/255, blue: 20/255) // logo shadow color
 }
+
+// for showing location services status, displays locatio status
+extension CLAuthorizationStatus {
+    var description: String {
+        switch self {
+        case .notDetermined: return "Not Determined"
+        case .restricted: return "Restricted"
+        case .denied: return "Denied"
+        case .authorizedAlways: return "Authorized Always"
+        case .authorizedWhenInUse: return "Authorized When In Use"
+        @unknown default: return "Unknown"
+        }
+    }
+}
+
 
 // maakes struct User info into a dictionary, used to simplify storing user data into firebase, .setData( used for this ), does not work well so currently not using this. Supposed to be used in Login_SignUp file in create_account() funtion
 /* extension Encodable {
