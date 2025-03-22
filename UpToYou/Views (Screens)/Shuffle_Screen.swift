@@ -31,29 +31,30 @@ struct Shuffle_Screen: View {
                     
                     Text("Shuffle")
                         .foregroundColor(.gray)
-                
+                    
+                    // location services button
+                    Button {
+                        CLLocationManager().requestWhenInUseAuthorization()
+                        //locationManager.requestLocationPermission()
+                    } label: {
+                        Text("Enable Location")
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                            .padding()
+                    }
+                    Text("Location Permission Status: \(locationManager.authorizationStatus.description)")
+                        .padding()
+                        .foregroundColor(.gray)
+                    
                     /*
                      Up To You button
-                     this button will randomize restaurants and pick a place to eat for the user. 
+                     this button will randomize restaurants and pick a place to eat for the user.
                      */
-                    VStack {
-                        Button {
-                            CLLocationManager().requestWhenInUseAuthorization()
-                            //locationManager.requestLocationPermission()
-                        } label: {
-                            Text("Enable Location")
-                                .padding()
-                                .frame(maxWidth: .infinity)
-                                .background(Color.blue)
-                                .foregroundColor(.white)
-                                .cornerRadius(10)
-                                .padding()
-                        }
-        
-                        Text("Location Permission Status: \(locationManager.authorizationStatus.description)")
-                            .padding()
-                            .foregroundColor(.gray)
-                    }
+                    
+                    
                     
                     Spacer()
                     Divider()

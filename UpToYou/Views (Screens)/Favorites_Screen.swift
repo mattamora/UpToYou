@@ -35,27 +35,34 @@ struct Favorites_Screen: View {
         NavigationStack {
             ZStack {
                 Color.mainColor.ignoresSafeArea()
-                
                 VStack {
                     
-                    HStack {
-                        Text("Favorites")
-                            .foregroundColor(.gray)
-                            .font(.system(size: 40))
-                            .fontWeight(.bold)
-                            .offset(x: 30)
-                        Spacer()
-                        Image(systemName: "text.badge.plus")
-                            .resizable()
-                            .frame(width: 33, height: 33)
-                            .foregroundStyle(.gray)
-                            .offset(x: -30)
+                    VStack(spacing: 15) {
+                        HStack {
+                            Text("Favorites")
+                                .foregroundColor(.gray)
+                                .font(.system(size: 40))
+                                .fontWeight(.bold)
+                                .offset(x: 30)
+                            Spacer()
+                            Image(systemName: "text.badge.plus")
+                                .resizable()
+                                .frame(width: 33, height: 33)
+                                .foregroundStyle(.gray)
+                                .offset(x: -30)
+                            
+                        }
+                    
+                        Divider()
+                            .frame(height: 1)
+                            .background(Color.gray)
                     }
-                    .offset(y: 20)
-                    Divider()
-                        .frame(height: 1)
-                        .background(Color.gray)
-                        .offset(y: 10)
+                    .padding(.top, 10)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.mainColor)
+                    .zIndex(1)
+                    
+                
                     
                     List(faveItems, id: \.ID) { item in
                         Favorite_Item(item: item)
@@ -75,22 +82,24 @@ struct Favorites_Screen: View {
                                         }
                                     }
                             } label: {
-                                Label("Delete", systemImage: "trash")
+                                Label("Remove", systemImage: "trash")
                             }
                         }
                     }
                     .scrollContentBackground(.hidden)
-                    .padding(.top, -20)
-                    // .listStyle(.plain) // 🔹 Optional: Removes extra padding in grouped lists
+                    .zIndex(0) // keeps list items under the Favorites when scrolling
+                    .offset(y: 2)
+                    .padding(.top, -50)
+                    .frame(maxHeight: .infinity) // ensure only list scrolls
+                    //.listStyle(.plain) // Optional: Removes extra padding in grouped lists
 
                     
-                    
+                    // bottom icons, navigation
                     Spacer()
                     Divider()
                         .frame(height: 2)
                         .background(Color.gray)
                         .padding(.bottom, 20)
-                    // bottom icons, navigation
                     HStack {
                         Spacer()
                         VStack {
@@ -160,7 +169,6 @@ struct Favorites_Screen: View {
                     }
                     
                 } // end of VStack
-                
             } // end of ZStack
         } // end of Navigation Stack
     } // end of body view
@@ -169,3 +177,5 @@ struct Favorites_Screen: View {
 #Preview {
     Favorites_Screen(userID: "7fnIEM2FyMY6LaTreBpAwGb3Jyg1")
 }
+
+
