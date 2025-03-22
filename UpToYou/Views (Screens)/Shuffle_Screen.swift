@@ -23,9 +23,9 @@ struct Shuffle_Screen: View {
     @State private var toFavorites_Screen = false
     
     // for the distance filter selection
-    @State private var showDistanceSheet = true
-    @State private var selectedDistance: Int = 5
-    let distanceOptions = [5, 10, 15, 20, 25, 35, 50]
+    @State private var showDistanceSheet = false
+    @State private var selectedDistance = 5
+    let distanceOptions = [5, 10, 15, 20, 25]
 
     
     var body: some View {
@@ -59,14 +59,14 @@ struct Shuffle_Screen: View {
                      */
                     
                 
+                    // uses Yelp API to fetch restaurants
                     Button {
                         if let location = locationManager.userLocation {
                             ShuffleViewModel.fetchYelpRestaurants(
                                 latitude: location.latitude,
-                                longitude: location.longitude
+                                longitude: location.longitude,
+                                distanceInMiles: selectedDistance
                             )
-                        } else {
-                            print("📍 Location not available yet")
                         }
                     } label: {
                         Text("Fetch Nearby Restaurants")
@@ -77,19 +77,27 @@ struct Shuffle_Screen: View {
                             .cornerRadius(10)
                             .padding()
                     }
+                    .disabled(locationManager.userLocation == nil)
 
                     if ShuffleViewModel.isLoading {
                         ProgressView("Loading...")
-                    }
+                    } else if ShuffleViewModel.restaurants.isEmpty {
+                        Text("No Restaurants Nearby!")
+                            .foregroundColor(.gray)
+                            .padding()
+                    } else {
+                        
+                        List(ShuffleViewModel.restaurants, id: \.url) { resto in
+                            let itemModel = ShuffleViewModel.convertToFavoriteModel(resto)
 
-                    List(ShuffleViewModel.restaurants, id: \.name) { r in
-                        VStack(alignment: .leading, spacing: 5) {
-                            Text(r.name)
-                                .font(.headline)
-                            Text("⭐️ \(r.rating) — \(r.location.city), \(r.location.state)")
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
+                            Favorite_Item(item: itemModel)
+                                .listRowInsets(EdgeInsets()) // Removes default List padding
+                                .frame(maxWidth: .infinity)
+                                .listRowSeparatorTint(.white, edges: .bottom)
                         }
+                        .scrollContentBackground(.hidden)
+                        .frame(maxHeight: .infinity)
+
                     }
                     
         

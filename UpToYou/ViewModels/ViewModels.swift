@@ -389,15 +389,20 @@ class ShuffleScreenViewModel: ObservableObject {
     @Published var restaurants: [Restaurant] = []
     @Published var isLoading: Bool = false
 
-    // API stuff, Using Yelp Fusion API to get restaurants(
-    func fetchYelpRestaurants(latitude: Double, longitude: Double) {
-        isLoading = true
+    // API stuff, Using Yelp Fusion API to get restaurants
+    func fetchYelpRestaurants(latitude: Double, longitude: Double, distanceInMiles: Int) {
+        
+        isLoading = true // show loading if data fetch is taking too long
+        restaurants = [] // Clear old results
+        
+        // Convert miles to meters (1 mile = 1609.34 meters), Yelp only takes in meters, Yelp max is 40,000 meters or 25 miles
+        let radius = min(Int(Double(distanceInMiles) * 1609.34), 40000)
 
         let apiKey = "RWKuG7rNb1kvwTd8FTvofP8B7PZp7JBl4nGbi7Majn-aDCuu9nunUpwA2wn6SvJttitvFORhiJqLjMLIS9-_R1gmw1DmtS7pi4Qob98yAMmDHuuIVGzy7V-i4WzeZ3Yx"
-        let urlString = "https://api.yelp.com/v3/businesses/search?term=food&latitude=\(latitude)&longitude=\(longitude)&limit=10"
+        let urlString = "https://api.yelp.com/v3/businesses/search?term=restaurants&latitude=\(latitude)&longitude=\(longitude)&radius=\(radius)&sort_by=rating&limit=10"
 
         guard let url = URL(string: urlString) else {
-            print("❌ Invalid URL")
+            print("Invalid URL")
             isLoading = false
             return
         }
@@ -432,6 +437,19 @@ class ShuffleScreenViewModel: ObservableObject {
             }
         }.resume()
     }
+    
+    // Favorite_Item view expects a FavoriteItemModel, but Yelp API gives you Restaurant, so we make a small converter function.
+    // used to input Yelp data into Favorite_Item view
+    func convertToFavoriteModel(_ r: Restaurant) -> FavoriteItemModel {
+        return FavoriteItemModel(
+            ID: r.url,
+            restoName: r.name,
+            location: "\(r.location.city), \(r.location.state)",
+            picture: r.image_url ?? "placeholder_image", // default fallback
+            rating: r.rating
+        )
+    }
+
 }
 
 

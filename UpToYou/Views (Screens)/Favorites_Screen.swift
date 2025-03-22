@@ -24,12 +24,7 @@ struct Favorites_Screen: View {
         self.userID = userID
         self._faveItems = FirestoreQuery(collectionPath: "Users/\(userID)/Sample Favorites")
     }
-    // for testing and visual checks only
-    /*let favoriteItems = [
-           FavoriteItemModel(name: "Cava", location: "La Habra, CA"),
-           FavoriteItemModel(name: "Chipotle", location: "Los Angeles, CA"),
-           FavoriteItemModel(name: "In-N-Out", location: "Anaheim, CA")
-       ]*/
+
     
     var body: some View {
         NavigationStack {

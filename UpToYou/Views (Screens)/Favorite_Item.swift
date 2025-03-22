@@ -16,37 +16,37 @@ struct Favorite_Item: View {
         ZStack {
             Color.mainColor.ignoresSafeArea()
             HStack {
-                Image(item.picture) // ← Uses the image name from Firebase
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 70, height: 70)
-                    .cornerRadius(10)
+                
+                //  load an image from a URL over the internet
+                // URL(string: ...) converts that string into a proper URL object, what AsyncImage needs to make the web request, If this string is invalid (like not a real URL), AsyncImage just shows nothing
+                AsyncImage(url: URL(string: item.picture)) { image in
+                    image
+                        .resizable()
+                        .scaledToFill() // fills frame, crops if needed
+                } placeholder: {
+                    // shows while the image is still loading
+                    // spinning loading circle (standard iOS style)
+                    // goes away automatically when the image finishes loading
+                    ProgressView()
+                }
+                //.aspectRatio(contentMode: .fit)
+                .frame(width: 70, height: 70)
+                .cornerRadius(10)
+                .clipped() // ensures cropped edges don't overflow
                     
 
                 VStack(alignment: .leading) {
                     Text(item.restoName) // ← Dynamic name
                         .bold()
-                        .font(.system(size: 30))
+                        .font(.system(size: 25))
                         .foregroundColor(.white)
                         .offset(y: 8)
 
                     StarRatingView(rating: item.rating)
                         .offset(y: -7)
-                    
-                    /*
-                    HStack(spacing: 1) {
-                        Image(systemName: "star.fill")
-                        Image(systemName: "star.fill")
-                        Image(systemName: "star.fill")
-                        Image(systemName: "star.leadinghalf.filled")
-                        Image(systemName: "star")
-                    }
-                    .font(.system(size: 9))
-                    .foregroundColor(.yellow)
-                    .offset(y: -4)
-*/
                      
                     Text(item.location) // ← Dynamic location
+                        .font(.system(size: 10))
                         .offset(y: -7)
                         .foregroundColor(.white)
                 }
