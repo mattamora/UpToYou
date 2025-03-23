@@ -28,30 +28,7 @@ struct List_Screen: View {
                     Text("List")
                         .foregroundColor(.gray)
                     
-                    Text("Gonna be used as a placeholder to add to favorites for now")
-                        .foregroundColor(.gray)
                     
-                    VStack { // using a vstack to modify form height
-                        Text("This form adds sample data into firebase")
-                        Form {
-                            // TextField for single line inputs, can't change height
-                            TextField("Sample Restaurant", text:$listViewModel.restoName)
-                            TextField("Sample Picture", text:$listViewModel.picture)
-                            TextField("Sample Location", text:$listViewModel.location)
-                            TextField("Rating (0.0 - 5.0)", text: $listViewModel.ratingInput)
-                                    .keyboardType(.decimalPad) // Show number keyboard
-                            
-                            
-                            Button {
-                                listViewModel.saveToFirebase()
-                                
-                            } label : {
-                                Text("Save data to firebase favorites collection")
-                            }
-                        }
-                    }
-                    .frame(height: 300)
-                    .padding(.top, 20)
                     
                     Spacer()
                     

@@ -286,13 +286,13 @@ class FavoritesScreenViewModel: ObservableObject {
 }
 
 class ListScreenViewModel: ObservableObject {
+    init() {}
     // for now using this to add an item to favorites
     @Published var restoName = ""  // Restaurant Name
     @Published var location = ""  // location  city,state format, ex. La Habra, CA    Los Angeles, CA
     @Published var picture = ""  // image name, picture of restaurant  Image("")
     @Published var ratingInput = "" // rating of restaurant 0.0-5.0, number of stars to show
     
-    init() {}
     
     // saves data to firebase collection
     func saveToFirebase() {

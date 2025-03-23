@@ -22,8 +22,11 @@ struct Favorites_Screen: View {
     let userID: String
     init(userID: String) {
         self.userID = userID
-        self._faveItems = FirestoreQuery(collectionPath: "Users/\(userID)/Sample Favorites")
+        self._faveItems = FirestoreQuery(collectionPath: "Users/\(userID)/Favorite Restaurants")
     }
+    
+    @State private var showSearchSheet = false
+    @State private var searchText = ""
 
     
     var body: some View {
@@ -40,11 +43,15 @@ struct Favorites_Screen: View {
                                 .fontWeight(.bold)
                                 .offset(x: 30)
                             Spacer()
-                            Image(systemName: "text.badge.plus")
-                                .resizable()
-                                .frame(width: 33, height: 33)
-                                .foregroundStyle(.gray)
-                                .offset(x: -30)
+                            Button {
+                                showSearchSheet = true
+                            } label: {
+                                Image(systemName: "text.badge.plus")
+                                    .resizable()
+                                    .frame(width: 33, height: 33)
+                                    .foregroundStyle(.gray)
+                            }
+                            .offset(x: -30)
                             
                         }
                     
@@ -68,7 +75,7 @@ struct Favorites_Screen: View {
                             Button(role: .destructive) {
                                 Firestore.firestore()
                                     .collection("Users").document(userID)
-                                    .collection("Sample Favorites").document(item.ID)
+                                    .collection("Favorite Restaurants").document(item.ID)
                                     .delete() { error in
                                         if let error = error {
                                             print("Error deleting document: \(error.localizedDescription)")
@@ -165,6 +172,37 @@ struct Favorites_Screen: View {
                     
                 } // end of VStack
             } // end of ZStack
+            .fullScreenCover(isPresented: $showSearchSheet) {
+                // shows Restaurant_Search view when top right button is clicked
+                Restaurant_Search(showSearchSheet: $showSearchSheet, searchText: $searchText)
+            }
+
+            /*
+            .sheet(isPresented: $showSearchSheet) {
+                VStack(spacing: 0) {
+                    Text("Search Restaurants")
+                        .font(.headline)
+                        .foregroundColor(.gray)
+                        .padding(.top)
+                    
+                    TextField("Search by Restaurant Name", text: $searchText)
+                        .textFieldStyle(.roundedBorder)
+                        .padding()
+
+                    // Placeholder for results (we'll hook this up later)
+                    ScrollView {
+                        Text("Results will appear here...")
+                            .foregroundColor(.gray)
+                            .padding(.top, 50)
+                    }
+                    Spacer()
+                }
+                .padding()
+                .background(Color.mainColor)
+                .ignoresSafeArea(edges: .top)
+                //.presentationDetents([.medium, .large]) // Optional: allows swipe-up expansion
+            }
+*/
         } // end of Navigation Stack
     } // end of body view
 } // end of Profile view
