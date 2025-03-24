@@ -34,37 +34,48 @@ struct Login_Screen: View {
                     Spacer()
                     
                     // Email/username field
-                    Image(systemName: "envelope.fill")
-                        .foregroundStyle(.gray)
-                        .font(.system(size: 60))
-                        .offset(y: -30)
-                    TextField("Email", text: $user_login.email)
-                        .padding(.horizontal)
-                        .frame(width: 300, height: 70)
-                        .background(Color.white)
-                        .cornerRadius(20)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(Color.gray, lineWidth: 3))
-                        .autocapitalization(.none)
-                        .keyboardType(.emailAddress)
-                        .disableAutocorrection(true)
-                        .offset(y: -25)
+                    HStack {
+                       
+                        Image(systemName: "envelope.fill")
+                            .foregroundStyle(.gray)
+                            .font(.system(size: 50))
+                        
+                        TextField("Email", text: $user_login.email)
+                            .padding(.horizontal)
+                            .frame(width: 270, height: 70)
+                            .background(Color.white)
+                            .cornerRadius(20)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(Color.gray, lineWidth: 3))
+                            .autocapitalization(.none)
+                            .keyboardType(.emailAddress)
+                            .disableAutocorrection(true)
+                            .foregroundColor(.black)
+                    }
+                    .offset(y: -100)
+                   
+                   
                     
                     // Password field
-                    Image(systemName: "lock.fill")
-                        .foregroundStyle(.gray)
-                        .font(.system(size: 60))
-                        .offset(y: -10)
-                    SecureField("Enter Password", text: $user_login.password)
-                        .padding(.horizontal)
-                        .frame(width: 300, height: 70)
-                        .background(Color.white)
-                        .cornerRadius(20)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(Color.gray, lineWidth: 3))
-                        .offset(y: -10)
+                    HStack {
+                        Image(systemName: "lock.fill")
+                            .foregroundStyle(.gray)
+                            .font(.system(size: 60))
+                        SecureField("Enter Password", text: $user_login.password)
+                            .padding(.horizontal)
+                            .frame(width: 270, height: 70)
+                            .background(Color.white)
+                            .cornerRadius(20)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(Color.gray, lineWidth: 3))
+                            .offset(x: 7)
+                            .foregroundColor(.black)
+                    }
+                    .offset(y: -90)
+                    
+                   
                     
                     // Login Button
                     Button {
@@ -78,8 +89,10 @@ struct Login_Screen: View {
                             .background(Color.themeColor)
                             .cornerRadius(20)
                             .bold()
-                            .offset(y: 20)
                     }
+                    .padding(.top, -70)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding(.trailing, 30)
                     .navigationDestination(isPresented: $user_login.isLoggedIn) {
                         Profile_Screen()
                             .navigationBarBackButtonHidden(true)
@@ -98,7 +111,7 @@ struct Login_Screen: View {
                                 .font(.system(size: 15))
                         })
                     }
-                    .offset(y: 90)
+                    .offset(y: 120)
                     
                     Spacer()
                 
@@ -113,6 +126,7 @@ struct Login_Screen: View {
                     .offset(y: -240)
                 }
             } // end of ZStack
+            .ignoresSafeArea(.keyboard) // static so keyboard does not push UI up
         } // end of Navigation Stack
     } // end of body view
 } // end of Profile view

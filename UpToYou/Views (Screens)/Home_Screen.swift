@@ -77,9 +77,9 @@ public struct Home_Screen: View {
                         }
                         Spacer()
                         VStack {
-                            Image(systemName: "arrow.trianglehead.2.clockwise")
+                            Image(systemName: "shuffle.circle")
                                 .resizable()
-                                .frame(width: 33, height: 33)
+                                .frame(width: 37, height: 37)
                                 .onTapGesture {toShuffle_Screen = true}
                             Text("Shuffle")
                                 .font(.caption)

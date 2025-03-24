@@ -436,6 +436,92 @@ class RestaurantSearchViewModel: ObservableObject { // this view is used in the 
 
 class ListScreenViewModel: ObservableObject {
     init() {}
+    
+    @Published var restaurants: [Restaurant] = []
+    @Published var isLoading: Bool = false
+
+    // API stuff, Using Yelp Fusion API to get restaurants
+    func fetchYelpRestaurants(latitude: Double, longitude: Double, distanceInMiles: Int, foodType: FoodType) {
+        
+        isLoading = true // show loading if data fetch is taking too long
+        restaurants = [] // Clear old results
+        
+        // Convert miles to meters (1 mile = 1609.34 meters), Yelp only takes in meters, Yelp max is 40,000 meters or 25 miles
+        let radius = min(Int(Double(distanceInMiles) * 1609.34), 40000)
+        
+        // for the food type filter
+        let categoryParam: String
+        if let category = foodType.yelpCategory {
+            categoryParam = category
+        } else {
+            categoryParam = "restaurants,food"
+        }
+
+        let apiKey = "RWKuG7rNb1kvwTd8FTvofP8B7PZp7JBl4nGbi7Majn-aDCuu9nunUpwA2wn6SvJttitvFORhiJqLjMLIS9-_R1gmw1DmtS7pi4Qob98yAMmDHuuIVGzy7V-i4WzeZ3Yx"
+        let urlString = "https://api.yelp.com/v3/businesses/search?latitude=\(latitude)&longitude=\(longitude)&radius=\(radius)&categories=\(categoryParam)&sort_by=distance&limit=10" // use &sort_by=rating if u want to sort it by highest rating to least
+        guard let url = URL(string: urlString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "") else {
+            print("Invalid URL")
+            isLoading = false
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            DispatchQueue.main.async {
+                self.isLoading = false
+            }
+
+            if let error = error {
+                print("Request error: \(error.localizedDescription)")
+                return
+            }
+
+            guard let data = data else {
+                print("No data received")
+                return
+            }
+
+            do {
+                let decodedResponse = try JSONDecoder().decode(YelpSearchResponse.self, from: data)
+
+                // some restaurants, farther than the within mile disatnce, appear in the search results, so this changes that
+                let maxDistanceMeters = Double(distanceInMiles) * 1609.34
+                let filtered = decodedResponse.restos.filter {
+                    $0.distance <= maxDistanceMeters
+                }
+
+                DispatchQueue.main.async {
+                    self.restaurants = filtered
+                }
+                
+            } catch {
+                print("Decoding error: \(error.localizedDescription)")
+            }
+
+        }.resume()
+    }
+
+    
+    // Favorite_Item view expects a FavoriteItemModel, but Yelp API gives you Restaurant, so we make a small converter function.
+    // used to input Yelp data into Favorite_Item view
+    func convertToFavoriteModel(_ r: Restaurant) -> FavoriteItemModel {
+        return FavoriteItemModel(
+            ID: r.url,
+            restoName: r.name,
+            location: "\(r.location.city), \(r.location.state)",
+            picture: r.image_url ?? "placeholder_image", // default fallback
+            rating: r.rating,
+            latitude: r.coordinates.latitude,
+            longitude: r.coordinates.longitude
+        )
+    }
+
+    
+    // OG code for this model
+    /*
     // for now using this to add an item to favorites
     @Published var restoName = ""  // Restaurant Name
     @Published var location = ""  // location  city,state format, ex. La Habra, CA    Los Angeles, CA
@@ -532,94 +618,13 @@ class ListScreenViewModel: ObservableObject {
        
         
         return true
-    }
+    } */
     
 }
 
 class ShuffleScreenViewModel: ObservableObject {
     init() {}
     
-    @Published var restaurants: [Restaurant] = []
-    @Published var isLoading: Bool = false
-
-    // API stuff, Using Yelp Fusion API to get restaurants
-    func fetchYelpRestaurants(latitude: Double, longitude: Double, distanceInMiles: Int, foodType: FoodType) {
-        
-        isLoading = true // show loading if data fetch is taking too long
-        restaurants = [] // Clear old results
-        
-        // Convert miles to meters (1 mile = 1609.34 meters), Yelp only takes in meters, Yelp max is 40,000 meters or 25 miles
-        let radius = min(Int(Double(distanceInMiles) * 1609.34), 40000)
-        
-        // for the food type filter
-        let categoryParam: String
-        if let category = foodType.yelpCategory {
-            categoryParam = category
-        } else {
-            categoryParam = "restaurants,food"
-        }
-
-        let apiKey = "RWKuG7rNb1kvwTd8FTvofP8B7PZp7JBl4nGbi7Majn-aDCuu9nunUpwA2wn6SvJttitvFORhiJqLjMLIS9-_R1gmw1DmtS7pi4Qob98yAMmDHuuIVGzy7V-i4WzeZ3Yx"
-        let urlString = "https://api.yelp.com/v3/businesses/search?latitude=\(latitude)&longitude=\(longitude)&radius=\(radius)&categories=\(categoryParam)&sort_by=distance&limit=10" // use &sort_by=rating if u want to sort it by highest rating to least
-        guard let url = URL(string: urlString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "") else {
-            print("Invalid URL")
-            isLoading = false
-            return
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            DispatchQueue.main.async {
-                self.isLoading = false
-            }
-
-            if let error = error {
-                print("Request error: \(error.localizedDescription)")
-                return
-            }
-
-            guard let data = data else {
-                print("No data received")
-                return
-            }
-
-            do {
-                let decodedResponse = try JSONDecoder().decode(YelpSearchResponse.self, from: data)
-
-                // some restaurants, farther than the within mile disatnce, appear in the search results, so this changes that
-                let maxDistanceMeters = Double(distanceInMiles) * 1609.34
-                let filtered = decodedResponse.restos.filter {
-                    $0.distance <= maxDistanceMeters
-                }
-
-                DispatchQueue.main.async {
-                    self.restaurants = filtered
-                }
-                
-            } catch {
-                print("Decoding error: \(error.localizedDescription)")
-            }
-
-        }.resume()
-    }
-
-    
-    // Favorite_Item view expects a FavoriteItemModel, but Yelp API gives you Restaurant, so we make a small converter function.
-    // used to input Yelp data into Favorite_Item view
-    func convertToFavoriteModel(_ r: Restaurant) -> FavoriteItemModel {
-        return FavoriteItemModel(
-            ID: r.url,
-            restoName: r.name,
-            location: "\(r.location.city), \(r.location.state)",
-            picture: r.image_url ?? "placeholder_image", // default fallback
-            rating: r.rating,
-            latitude: r.coordinates.latitude,
-            longitude: r.coordinates.longitude
-        )
-    }
 
 }
 
@@ -652,6 +657,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
 
     @Published var userLocation: CLLocationCoordinate2D?
     @Published var permissionDenied: Bool = false
+    @Published var cityAndState: String? = nil  // string version of latitude and longitude, "city, state", shown in Profile_Screen
 
     override init() {
         super.init()
@@ -673,13 +679,30 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
 
+    
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        if let location = locations.last {
-            DispatchQueue.main.async {
-                self.userLocation = location.coordinate
+        guard let location = locations.last else { return }
+
+        // Save coordinate for map/search usage
+        DispatchQueue.main.async {
+            self.userLocation = location.coordinate
+        }
+
+        // Reverse geocode for city + state display, in Profile_Screen, updates this classes cityAndState based on current latitude and longitude
+        let geocoder = CLGeocoder()
+        geocoder.reverseGeocodeLocation(location) { placemarks, error in
+            if let placemark = placemarks?.first {
+                let city = placemark.locality ?? ""
+                let state = placemark.administrativeArea ?? ""
+                DispatchQueue.main.async {
+                    self.cityAndState = "\(city), \(state)"
+                }
+            } else if let error = error {
+                print("Geocoding failed: \(error.localizedDescription)")
             }
         }
     }
+
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         checkLocationAuthorization()

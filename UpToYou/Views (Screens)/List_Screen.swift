@@ -9,13 +9,25 @@ import SwiftUI
 
 struct List_Screen: View {
     
+    @StateObject var ListViewModel = ListScreenViewModel()
+    
+    // for handling location
+    @StateObject private var locationManager = LocationManager()
+    
     // Navigation Purposes, no need for List_Screen
     @State private var toHome_Screen = false
     @State private var toProfile_Screen = false
     @State private var toShuffle_Screen = false
     @State private var toFavorites_Screen = false
     
-    @StateObject var listViewModel = ListScreenViewModel()
+    // for the distance filter selection
+    @State private var showDistanceSheet = false
+    @State private var selectedDistance = 5
+    let distanceOptions = [5, 10, 15, 20, 25]
+    
+    // for type of food filter
+    @State private var showFoodSheet = false
+    @State private var selectedFoodType: FoodType = .any // enum in Structs&Extensions
 
     
     var body: some View {
@@ -24,20 +36,92 @@ struct List_Screen: View {
                 Color.mainColor.ignoresSafeArea()
                 
                 VStack {
+                    // filter buttons
+                    HStack {
+                        Button {
+                            showDistanceSheet = true
+                        } label: {
+                            HStack (spacing: 5) {
+                                Image(systemName: "location")
+                                Text("Within: \(selectedDistance) miles")
+                            }
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 16)
+                            .foregroundColor(Color.gray)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(Color.gray, lineWidth: 1)
+                            )
+                            
+                        }
+                        
+                        Button {
+                            showFoodSheet = true
+                        } label : {
+                            HStack (spacing: 5) {
+                                Image(systemName: "fork.knife")
+                                Text("Food Type: \(selectedFoodType.rawValue)")
+                            }
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 16)
+                            .foregroundColor(Color.gray)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(Color.gray, lineWidth: 1)
+                            )
+                            
+                        }
+                    }
                     
-                    Text("List")
-                        .foregroundColor(.gray)
+                    // uses Yelp API to fetch restaurants, in order of distance
+                    Button {
+                        if let location = locationManager.userLocation {
+                            ListViewModel.fetchYelpRestaurants(
+                                latitude: location.latitude,
+                                longitude: location.longitude,
+                                distanceInMiles: selectedDistance,
+                                foodType: selectedFoodType
+                            )
+                        }
+                    } label: {
+                        Text("Fetch Nearby Restaurants")
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                            .padding()
+                    }
+                    .disabled(locationManager.userLocation == nil)
+
+                    // loading or empty text
+                    if ListViewModel.isLoading {
+                        ProgressView("Loading...")
+                    } else if ListViewModel.restaurants.isEmpty {
+                        Text("No Restaurants Nearby!")
+                            .foregroundColor(.gray)
+                            .padding()
+                    } else {
+                        
+                        List(ListViewModel.restaurants, id: \.url) { resto in
+                            let itemModel = ListViewModel.convertToFavoriteModel(resto)
+
+                            Favorite_Item(item: itemModel)
+                                .listRowInsets(EdgeInsets()) // Removes default List padding
+                                .frame(maxWidth: .infinity)
+                                .listRowSeparatorTint(.white, edges: .bottom)
+                        }
+                        .scrollContentBackground(.hidden)
+                        .frame(maxHeight: .infinity)
+
+                    }
                     
-                    
-                    
+                    // bottom icons, navigation
                     Spacer()
-                    
                     Divider()
                         .frame(height: 2)
                         .background(Color.gray)
                         .padding(.bottom, 20)
-                    
-                    // bottom icons, navigation
                     HStack {
                         Spacer()
                         VStack {
@@ -60,9 +144,9 @@ struct List_Screen: View {
                         }
                         Spacer()
                         VStack {
-                            Image(systemName: "arrow.trianglehead.2.clockwise")
+                            Image(systemName: "shuffle.circle")
                                 .resizable()
-                                .frame(width: 33, height: 33)
+                                .frame(width: 37, height: 37)
                                 .onTapGesture {toShuffle_Screen = true}
                             Text("Shuffle")
                                 .font(.caption)
@@ -93,12 +177,12 @@ struct List_Screen: View {
                         Home_Screen()
                             .navigationBarBackButtonHidden(true)
                     }
-                    .navigationDestination(isPresented: $toProfile_Screen) {
-                        Profile_Screen()
-                            .navigationBarBackButtonHidden(true)
-                    }
                     .navigationDestination(isPresented: $toShuffle_Screen) {
                         Shuffle_Screen()
+                            .navigationBarBackButtonHidden(true)
+                    }
+                    .navigationDestination(isPresented: $toProfile_Screen) {
+                        Profile_Screen()
                             .navigationBarBackButtonHidden(true)
                     }
                     .navigationDestination(isPresented: $toFavorites_Screen) {
@@ -107,7 +191,78 @@ struct List_Screen: View {
                     }
                     
                 } // end of VStack
-                
+                .sheet(isPresented: $showDistanceSheet) {
+                    VStack(spacing: 16) {
+                        Text("Choose Distance Limit")
+                            .font(.system(size: 35))
+                            .foregroundStyle(.gray)
+                            .bold()
+
+                        Picker("Distance", selection: $selectedDistance) {
+                            ForEach(distanceOptions, id: \.self) { miles in
+                                Text("\(miles) miles").tag(miles)
+                                    .font(.system(size: 30))
+                                    .foregroundStyle(.gray)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.wheel)
+                        .frame(height: 200)
+
+                        Button {
+                            showDistanceSheet = false
+                        } label : {
+                            Text("Done")
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.red)
+                                .foregroundColor(.white)
+                                .cornerRadius(12)
+                                .offset(y: 30)
+                        }
+                     
+                    }
+                    .padding(.horizontal)
+                    .frame(maxHeight: .infinity) // Let it expand
+                    .background(Color.mainColor) // Set the background color
+                    .presentationDetents([.fraction(0.6)]) // Limit sheet height to 50%
+                }
+                .sheet(isPresented: $showFoodSheet) {
+                    VStack(spacing: 16) {
+                        Text("Choose Food Type")
+                            .font(.system(size: 35))
+                            .foregroundStyle(.gray)
+                            .bold()
+
+                        Picker("Distance", selection: $selectedFoodType) {
+                            ForEach(FoodType.allCases) { food in
+                                Text(food.rawValue).tag(food)
+                                    .font(.system(size: 30))
+                                    .foregroundStyle(.gray)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.wheel)
+                        .frame(height: 200)
+
+                        Button {
+                            showFoodSheet = false
+                        } label : {
+                            Text("Done")
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.red)
+                                .foregroundColor(.white)
+                                .cornerRadius(12)
+                                .offset(y: 30)
+                        }
+                     
+                    }
+                    .padding(.horizontal)
+                    .frame(maxHeight: .infinity) // Let it expand
+                    .background(Color.mainColor) // Set the background color
+                    .presentationDetents([.fraction(0.6)]) // Limit sheet height to 50%
+                }
             } // end of ZStack
         } // end of Navigation Stack
     } // end of body view

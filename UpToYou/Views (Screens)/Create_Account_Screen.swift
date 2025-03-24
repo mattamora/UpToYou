@@ -27,51 +27,60 @@ struct Create_Account_Screen: View {
                     Spacer()
                     
                     VStack {
-                        Image(systemName: "person.fill")
-                            .foregroundStyle(.gray)
-                            .font(.system(size: 50))
-                        TextField("Full Name", text: $newUser.fullName)
-                            .padding(.horizontal)
-                            .frame(width: 300, height: 50)
-                            .background(Color.white) // Gives it a visible background
-                            .cornerRadius(20) // Rounds the edges
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .stroke(Color.gray, lineWidth: 3) // Adds a border
-                            )
+                        
+                        HStack {
+                            Image(systemName: "person.fill")
+                                .foregroundStyle(.gray)
+                                .font(.system(size: 50))
+                            TextField("Full Name", text: $newUser.fullName)
+                                .padding(.horizontal)
+                                .frame(width: 300, height: 50)
+                                .background(Color.white) // Gives it a visible background
+                                .cornerRadius(20) // Rounds the edges
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(Color.gray, lineWidth: 3)) // Adds a border
+                                .offset(x: 2)
+                                .foregroundColor(.black)
+                        }
+                        HStack {
+                            Image(systemName: "envelope.fill")
+                                .foregroundStyle(.gray)
+                                .font(.system(size: 40))
+                                .offset(y: 35)
+                            TextField("Email", text: $newUser.email)
+                                .padding(.horizontal)
+                                .frame(width: 300, height: 50)
+                                .background(Color.white) // Gives it a visible background
+                                .cornerRadius(20) // Rounds the edges
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(Color.gray, lineWidth: 3)) // Adds a border
+                                .autocapitalization(.none)
+                                .keyboardType(.emailAddress)
+                                .disableAutocorrection(true)
+                                .offset(y: 40)
+                                .foregroundColor(.black)
+                        }
+                        HStack {
+                            Image(systemName: "lock.fill")
+                                .foregroundStyle(.gray)
+                                .font(.system(size: 50))
+                                .offset(y: 70)
+                            SecureField("Enter Password", text: $newUser.password)
+                                .padding(.horizontal)
+                                .frame(width: 300, height: 50)
+                                .background(Color.white) // Gives it a visible background
+                                .cornerRadius(20) // Rounds the edges
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(Color.gray, lineWidth: 3)) // Adds a border
+                                .offset(x: 4, y: 70)
+                                .foregroundColor(.black)
+                        }
+                      
 
-                        Image(systemName: "envelope.fill")
-                            .foregroundStyle(.gray)
-                            .font(.system(size: 50))
-                            .offset(y: 35)
-                        TextField("Email", text: $newUser.email)
-                            .padding(.horizontal)
-                            .frame(width: 300, height: 50)
-                            .background(Color.white) // Gives it a visible background
-                            .cornerRadius(20) // Rounds the edges
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .stroke(Color.gray, lineWidth: 3) // Adds a border
-                            )
-                            .autocapitalization(.none)
-                            .keyboardType(.emailAddress)
-                            .disableAutocorrection(true)
-                            .offset(y: 40)
-
-                        Image(systemName: "lock.fill")
-                            .foregroundStyle(.gray)
-                            .font(.system(size: 50))
-                            .offset(y: 70)
-                        SecureField("Enter Password", text: $newUser.password)
-                            .padding(.horizontal)
-                            .frame(width: 300, height: 50)
-                            .background(Color.white) // Gives it a visible background
-                            .cornerRadius(20) // Rounds the edges
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .stroke(Color.gray, lineWidth: 3) // Adds a border
-                            )
-                            .offset(y: 70)
+                       
                         
                         
                         Button {
@@ -86,7 +95,9 @@ struct Create_Account_Screen: View {
                                 .cornerRadius(20)
                                 .bold()
                         }
-                        .offset(y: 100)
+                        .padding(.top, 100)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .padding(.trailing, 10)
                         
                     } // end of form VStack
                     .padding()
@@ -104,6 +115,7 @@ struct Create_Account_Screen: View {
                     .offset(y: -250)
                 }
             } // end of ZStack
+            .ignoresSafeArea(.keyboard) // static so keyboard does not push UI up
         } // end of navigation stack
     } // end of body view
 }

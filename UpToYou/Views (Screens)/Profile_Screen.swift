@@ -62,13 +62,13 @@ struct Profile_Screen: View {
                                      .foregroundColor(.gray)
                                      .font(.system(size: 10))
                                      .offset(y: 70)
-                             } else if let location = locationManager.userLocation {
-                                 Text("Current Location: \(location.latitude), \(location.longitude)")
+                             } else if let location = locationManager.cityAndState {
+                                 Text("Current Location: \(location)")
                                      .foregroundColor(.gray)
                                      .font(.system(size: 10))
                                      .offset(y: 70)
                              } else {
-                                 Text("Requesting location...")
+                                 Text("Locating city...")
                                      .foregroundColor(.gray)
                                      .font(.system(size: 10))
                                      .offset(y: 70)
@@ -129,9 +129,9 @@ struct Profile_Screen: View {
                         }
                         Spacer()
                         VStack {
-                            Image(systemName: "arrow.trianglehead.2.clockwise")
+                            Image(systemName: "shuffle.circle")
                                 .resizable()
-                                .frame(width: 33, height: 33)
+                                .frame(width: 37, height: 37)
                                 .onTapGesture {toShuffle_Screen = true}
                             Text("Shuffle")
                                 .font(.caption)
