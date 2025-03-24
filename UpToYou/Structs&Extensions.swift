@@ -52,8 +52,9 @@ struct Restaurant: Decodable {
     let location: Location
     let image_url: String?
     let rating: Double
-    let coordinates: Coordinates
+    let coordinates: Coordinates // latitude and longitude
     let url: String
+    let distance: Double // Yelp provides this in meters, used becuase filter for miles is not entirely accurate
 }
 struct Location: Decodable {
     let address1: String? // used in Favorite_Screen search
@@ -64,6 +65,11 @@ struct Coordinates: Decodable {
     let latitude: Double
     let longitude: Double
 }
+
+
+
+
+
 
 // Bottom Icons, used in all main screens
 struct BottomIcons {
@@ -93,7 +99,34 @@ struct FavoriteItemModel: Codable {
 
 
 
+// for food type options for the filter in Shuffle_Screen
+enum FoodType: String, CaseIterable, Identifiable {
+    
+    // for the view, Ui only
+    case any = "Any"
+    case burgers = "Burgers"
+    case pizza = "Pizza"
+    case sushi = "Sushi"
+    case tacos = "Tacos"
+    case steak = "Steak"
+    case fastfood = "Fast Food"
+    // add more as needed
 
+    var id: String { self.rawValue }
+
+    // for the filter of Yelp, yelp tags restaurants more reliably by category
+    var yelpCategory: String? {
+        switch self {
+        case .any: return nil // No category filter, show all food
+        case .burgers: return "burgers" // case .burgers: return "burgers,fastfood,tradamerican"  can combine categories
+        case .pizza: return "pizza"
+        case .sushi: return "sushi"
+        case .tacos: return "tacos"
+        case .steak: return "steak"
+        case .fastfood: return "fastfood" // spaces not allowed
+        }
+    }
+}
 
 
 

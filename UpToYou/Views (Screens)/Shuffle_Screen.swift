@@ -26,6 +26,10 @@ struct Shuffle_Screen: View {
     @State private var showDistanceSheet = false
     @State private var selectedDistance = 5
     let distanceOptions = [5, 10, 15, 20, 25]
+    
+    // for type of food filter
+    @State private var showFoodSheet = false
+    @State private var selectedFoodType: FoodType = .any // enum in Structs&Extensions
 
     
     var body: some View {
@@ -34,38 +38,51 @@ struct Shuffle_Screen: View {
                 Color.mainColor.ignoresSafeArea()
                 
                 VStack {
-                    
-                    Button {
-                        showDistanceSheet = true
-                    } label: {
-                        HStack (spacing: 5) {
-                            Image(systemName: "location")
-                            Text("Within: \(selectedDistance) miles")
+                    // filter buttons
+                    HStack {
+                        Button {
+                            showDistanceSheet = true
+                        } label: {
+                            HStack (spacing: 5) {
+                                Image(systemName: "location")
+                                Text("Within: \(selectedDistance) miles")
+                            }
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 16)
+                            .foregroundColor(Color.gray)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(Color.gray, lineWidth: 1)
+                            )
+                            
                         }
-                        .padding(.vertical, 10)
-                        .padding(.horizontal, 16)
-                        .foregroundColor(Color.gray)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(Color.gray, lineWidth: 1)
-                        )
                         
+                        Button {
+                            showFoodSheet = true
+                        } label : {
+                            HStack (spacing: 5) {
+                                Image(systemName: "fork.knife")
+                                Text("Food Type: \(selectedFoodType.rawValue)")
+                            }
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, 16)
+                            .foregroundColor(Color.gray)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(Color.gray, lineWidth: 1)
+                            )
+                            
+                        }
                     }
                     
-                    
-                    /*
-                     Up To You button
-                     this button will randomize restaurants and pick a place to eat for the user.
-                     */
-                    
-                
-                    // uses Yelp API to fetch restaurants
+                    // uses Yelp API to fetch restaurants, in order of distance
                     Button {
                         if let location = locationManager.userLocation {
                             ShuffleViewModel.fetchYelpRestaurants(
                                 latitude: location.latitude,
                                 longitude: location.longitude,
-                                distanceInMiles: selectedDistance
+                                distanceInMiles: selectedDistance,
+                                foodType: selectedFoodType
                             )
                         }
                     } label: {
@@ -79,6 +96,7 @@ struct Shuffle_Screen: View {
                     }
                     .disabled(locationManager.userLocation == nil)
 
+                    // loading or empty text
                     if ShuffleViewModel.isLoading {
                         ProgressView("Loading...")
                     } else if ShuffleViewModel.restaurants.isEmpty {
@@ -99,10 +117,6 @@ struct Shuffle_Screen: View {
                         .frame(maxHeight: .infinity)
 
                     }
-                    
-        
-                    
-                    
                     
                     // bottom icons, navigation
                     Spacer()
@@ -199,6 +213,42 @@ struct Shuffle_Screen: View {
 
                         Button {
                             showDistanceSheet = false
+                        } label : {
+                            Text("Done")
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.red)
+                                .foregroundColor(.white)
+                                .cornerRadius(12)
+                                .offset(y: 30)
+                        }
+                     
+                    }
+                    .padding(.horizontal)
+                    .frame(maxHeight: .infinity) // Let it expand
+                    .background(Color.mainColor) // Set the background color
+                    .presentationDetents([.fraction(0.6)]) // Limit sheet height to 50%
+                }
+                .sheet(isPresented: $showFoodSheet) {
+                    VStack(spacing: 16) {
+                        Text("Choose Food Type")
+                            .font(.system(size: 35))
+                            .foregroundStyle(.gray)
+                            .bold()
+
+                        Picker("Distance", selection: $selectedFoodType) {
+                            ForEach(FoodType.allCases) { food in
+                                Text(food.rawValue).tag(food)
+                                    .font(.system(size: 30))
+                                    .foregroundStyle(.gray)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.wheel)
+                        .frame(height: 200)
+
+                        Button {
+                            showFoodSheet = false
                         } label : {
                             Text("Done")
                                 .frame(maxWidth: .infinity)
