@@ -54,14 +54,27 @@ struct Favorite_Item: View {
 
                 Spacer()
 
-                Image(systemName: "arrow.up.forward.app")
-                    .font(.system(size: 30))
-                    .foregroundColor(.white)
+                Button {
+                    openInMaps(latitude: item.latitude, longitude: item.longitude)
+                } label: {
+                    Image(systemName: "arrow.up.forward.app")
+                        .font(.system(size: 30))
+                        .foregroundColor(.white)
+                }
+
             } // end of HStack
             .frame(maxWidth: .infinity) //  Expands row fully
             .padding([.top, .bottom], 15) //  Adds padding for spacing
         }
     } // end of body View
+    
+    // takes user to apple maps with specific directions
+    func openInMaps(latitude: Double, longitude: Double) {
+        let urlString = "http://maps.apple.com/?daddr=\(latitude),\(longitude)"
+        if let url = URL(string: urlString) {
+            UIApplication.shared.open(url)
+        }
+    }
 } // end of Favorite_Item struct View
 
 #Preview {
@@ -71,39 +84,8 @@ struct Favorite_Item: View {
         restoName: "Cava",
         location: "La Habra, CA",
         picture: "CAVA",
-        rating: 2.5
+        rating: 2.5,
+        latitude: 33.915436,
+        longitude: -117.968712
     ))
 }
-
-
-// goes inside HStack, old code, test UI
-/*
-Image("CAVA")
-    .resizable()
-    .aspectRatio(contentMode: .fit)
-    .frame(width: 100, height: 100)
-    .cornerRadius(20)
-    .offset(x: 20)
-VStack (alignment: .leading) {
-    Text("Cava")
-        .bold()
-        .font(.system(size: 40))
-    HStack (spacing: 1) {
-        Image(systemName: "star.fill")
-        Image(systemName: "star.fill")
-        Image(systemName: "star.fill")
-        Image(systemName: "star.leadinghalf.filled")
-        Image(systemName: "star")
-    }
-    .font(.system(size: 10))
-    Text("La Habra, CA")
-        .offset(y: 5)
-    
-}
-.offset(x: 30)
-
-Spacer()
-Image(systemName: "arrow.up.forward.app")
-    .font(.system(size: 40))
-    .offset(x: -30)
-*/

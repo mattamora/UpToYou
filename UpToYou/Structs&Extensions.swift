@@ -47,6 +47,7 @@ struct YelpSearchResponse: Decodable {
        }
 }
 struct Restaurant: Decodable {
+    let id: String // business id from Yelp, unique to every restaurant
     let name: String
     let location: Location
     let image_url: String?
@@ -55,6 +56,7 @@ struct Restaurant: Decodable {
     let url: String
 }
 struct Location: Decodable {
+    let address1: String? // used in Favorite_Screen search
     let city: String
     let state: String
 }
@@ -81,9 +83,11 @@ struct User: Codable {
 struct FavoriteItemModel: Codable {
     let ID: String // = UUID() // Unique ID for each item, dont use this for now
     let restoName: String
-    let location: String
+    let location: String // city, state
     let picture: String
     let rating: Double // rating property (0.0 to 5.0), used for stars
+    let latitude: Double  // Needed for directions, arrow button to maps
+    let longitude: Double // Needed for directions, arrow button to maps
 }
 
 

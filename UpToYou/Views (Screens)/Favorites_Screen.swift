@@ -5,6 +5,7 @@
 //  Created by Matthew Amora on 3/1/25.
 //
 import FirebaseFirestore
+import FirebaseAuth
 import SwiftUI
 
 struct Favorites_Screen: View {
@@ -17,12 +18,13 @@ struct Favorites_Screen: View {
     
     @StateObject var faveViewModel = FavoritesScreenViewModel()
     
-    // sample favorite items, for testing UI
     @FirestoreQuery var faveItems: [FavoriteItemModel]
-    let userID: String
-    init(userID: String) {
-        self.userID = userID
-        self._faveItems = FirestoreQuery(collectionPath: "Users/\(userID)/Favorite Restaurants")
+    private var userID: String { // gets current user id
+        Auth.auth().currentUser?.uid ?? "no-user"
+    }
+    init() { // firebase data gets stored into faveItems array
+        // userID may not be initialized yet which is why it is not used in this query
+        self._faveItems = FirestoreQuery(collectionPath: "Users/\(Auth.auth().currentUser?.uid ?? "no-user")/Favorite Restaurants")
     }
     
     @State private var showSearchSheet = false
@@ -176,39 +178,14 @@ struct Favorites_Screen: View {
                 // shows Restaurant_Search view when top right button is clicked
                 Restaurant_Search(showSearchSheet: $showSearchSheet, searchText: $searchText)
             }
-
-            /*
-            .sheet(isPresented: $showSearchSheet) {
-                VStack(spacing: 0) {
-                    Text("Search Restaurants")
-                        .font(.headline)
-                        .foregroundColor(.gray)
-                        .padding(.top)
-                    
-                    TextField("Search by Restaurant Name", text: $searchText)
-                        .textFieldStyle(.roundedBorder)
-                        .padding()
-
-                    // Placeholder for results (we'll hook this up later)
-                    ScrollView {
-                        Text("Results will appear here...")
-                            .foregroundColor(.gray)
-                            .padding(.top, 50)
-                    }
-                    Spacer()
-                }
-                .padding()
-                .background(Color.mainColor)
-                .ignoresSafeArea(edges: .top)
-                //.presentationDetents([.medium, .large]) // Optional: allows swipe-up expansion
-            }
-*/
         } // end of Navigation Stack
     } // end of body view
 } // end of Profile view
 
+
+
 #Preview {
-    Favorites_Screen(userID: "7fnIEM2FyMY6LaTreBpAwGb3Jyg1")
+    Favorites_Screen()
 }
 
 

@@ -224,7 +224,7 @@ class ProfileScreenViewModel: ObservableObject {
     // logged in or not
     @Published var isLoggedOut = false
     
-    // get specific user from firestore
+    // get specific user from firestore, updates currentUser to actual current user
     func fetchUser() {
         
         // function returns if no user is currently signed in
@@ -280,9 +280,40 @@ class ProfileScreenViewModel: ObservableObject {
 
 class FavoritesScreenViewModel: ObservableObject {
     
-    
     init() {}
     
+    // user from firestore databse
+    @Published var currentUser: User? = nil
+    
+    // get specific user from firestore, updates currentUser to actual current user
+    func fetchUser() {
+        
+        // function returns if no user is currently signed in
+        guard let userID = Auth.auth().currentUser?.uid else {
+            print("No user is signed in. Stopping fetchUser()") // for debugging only
+            return
+        }
+        
+        
+        // fetches current signed in user
+        Firestore.firestore()
+            .collection("Users").document(userID).getDocument { [weak self] snapshot, error in
+                guard let data = snapshot?.data(), error == nil else {
+                    return
+                }
+                
+                // uses User Struct from structs&extensions file
+                DispatchQueue.main.async {
+                    self?.currentUser = User(ID: data["ID"] as? String ?? "",
+                                      name: data["name"] as? String ?? "",
+                                      email: data["email"] as? String ?? "",
+                                      joined: data["joined"] as? TimeInterval ?? 0)
+                }
+            }
+        
+        print("Fetched user: \(userID)") // for debugging only
+        
+    }
 }
 
 class ListScreenViewModel: ObservableObject {
@@ -292,6 +323,8 @@ class ListScreenViewModel: ObservableObject {
     @Published var location = ""  // location  city,state format, ex. La Habra, CA    Los Angeles, CA
     @Published var picture = ""  // image name, picture of restaurant  Image("")
     @Published var ratingInput = "" // rating of restaurant 0.0-5.0, number of stars to show
+    @Published var longitude = 0.0  // for arrow button
+    @Published var latitude = 0.0  // for arrow button
     
     
     // saves data to firebase collection
@@ -303,7 +336,7 @@ class ListScreenViewModel: ObservableObject {
             return
         }
         
-        // restaurant rating
+        // restaurant rating, uses ratingInput to convert into a double
         guard let rating = Double(ratingInput), rating >= 0.0, rating <= 5.0 else {
             print("Invalid rating. Enter a number between 0.0 and 5.0.") //  Validation
             return
@@ -327,8 +360,10 @@ class ListScreenViewModel: ObservableObject {
         let newItem = FavoriteItemModel(ID: newID,
                                         restoName: restoName,  // restaurant name
                                         location: location,  // location  city, state
-                                        picture: picture,
-                                        rating: rating)  // image name from assets
+                                        picture: picture, // image name from assets
+                                        rating: rating,
+                                        latitude: latitude,
+                                        longitude: longitude)
         
         
         
@@ -446,8 +481,128 @@ class ShuffleScreenViewModel: ObservableObject {
             restoName: r.name,
             location: "\(r.location.city), \(r.location.state)",
             picture: r.image_url ?? "placeholder_image", // default fallback
-            rating: r.rating
+            rating: r.rating,
+            latitude: r.coordinates.latitude,
+            longitude: r.coordinates.longitude
         )
+    }
+
+}
+
+class RestaurantSearchViewModel: ObservableObject { // this view is used in the Favorites_Screen, shows 10 restaurants only for now
+    
+    @Published var results: [Restaurant] = []
+    @Published var isLoading = false
+
+    // uses Yelp API to search for restaurant name, shows all restaurants within 25 miles (40000 meters)
+    func searchYelp(for term: String, latitude: Double, longitude: Double) {
+        guard !term.trimmingCharacters(in: .whitespaces).isEmpty else {
+            self.results = []
+            return
+        }
+
+        isLoading = true
+
+        let apiKey = "RWKuG7rNb1kvwTd8FTvofP8B7PZp7JBl4nGbi7Majn-aDCuu9nunUpwA2wn6SvJttitvFORhiJqLjMLIS9-_R1gmw1DmtS7pi4Qob98yAMmDHuuIVGzy7V-i4WzeZ3Yx"
+        let encodedTerm = term.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? term  // handles restaurants with spaces in their names
+        let urlString = "https://api.yelp.com/v3/businesses/search?term=\(encodedTerm)&latitude=\(latitude)&longitude=\(longitude)&radius=40000&sort_by=distance&limit=10&categories=restaurants,food"
+
+        
+        guard let url = URL(string: urlString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "") else {
+            print("Invalid URL")
+            isLoading = false
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            DispatchQueue.main.async {
+                self.isLoading = false
+            }
+
+            if let error = error {
+                print("Error: \(error.localizedDescription)")
+                return
+            }
+
+            guard let data = data else {
+                print("No data")
+                return
+            }
+
+            do {
+                let decoded = try JSONDecoder().decode(YelpSearchResponse.self, from: data)
+                DispatchQueue.main.async {
+                    self.results = decoded.restos
+                }
+            } catch {
+                print("Decoding error: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    self.results = []
+                }
+            }
+        }.resume()
+    }
+    
+    // user favorite restaurants, also stored in firebase
+    @Published var favoriteIDs: Set<String> = []
+    func loadFavorites() {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+
+        Firestore.firestore()
+            .collection("Users").document(userID)
+            .collection("Favorite Restaurants")
+            .getDocuments { snapshot, error in
+                if let documents = snapshot?.documents {
+                    let ids = documents.map { $0.documentID }
+                    DispatchQueue.main.async {
+                        self.favoriteIDs = Set(ids)
+                    }
+                }
+            }
+    }
+    
+    // adds restaurant to favorites, and fills the heart, does not remove from favorites if pressed again
+    func addToFavorites(restaurant: Restaurant) {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+
+        let docID = restaurant.id
+
+        // Skip if already in favorites
+        if favoriteIDs.contains(docID) { return }
+
+        // Convert to FavoriteItemModel
+        let newItem = FavoriteItemModel(
+            ID: docID,
+            restoName: restaurant.name,
+            location: "\(restaurant.location.city), \(restaurant.location.state)",
+            picture: restaurant.image_url ?? "",
+            rating: restaurant.rating,
+            latitude: restaurant.coordinates.latitude,
+            longitude: restaurant.coordinates.longitude
+        )
+
+
+        do {
+            let data = try DictionaryEncoder().encode(newItem)
+            Firestore.firestore()
+                .collection("Users").document(userID)
+                .collection("Favorite Restaurants").document(docID)
+                .setData(data) { error in
+                    if let error = error {
+                        print("Firestore save error: \(error.localizedDescription)")
+                    } else {
+                        DispatchQueue.main.async {
+                            self.favoriteIDs.insert(docID) // update UI immediately
+                        }
+                    }
+                }
+        } catch {
+            print("Encoding error: \(error)")
+        }
     }
 
 }
@@ -473,7 +628,7 @@ class AuthViewModel: ObservableObject {
 
 // asks the user if the app can view their location
 // currently using MapKit and CLLocationManager().requestWhenInUseAuthorization() to ask for location permission
-// manage current location
+// manage current location, used in Restaurant_Search, Profile_Screen,
 class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private let manager = CLLocationManager()
 
