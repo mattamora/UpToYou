@@ -207,12 +207,51 @@ class CreateAccountViewModel: ObservableObject {
 }
 
 class HomeScreenViewModel: ObservableObject {
-    init () {}
-    @Published var currentUserID: String = ""
-    @Published var currentUserName: String = ""
+    init() {}
     
+    // user from firestore databse
+    @Published var currentUser: User? = nil
     
+    // get specific user from firestore, updates currentUser to actual current user
+    func fetchUser() {
+        
+        // function returns if no user is currently signed in
+        guard let userID = Auth.auth().currentUser?.uid else {
+            print("No user is signed in. Stopping fetchUser()") // for debugging only
+            return
+        }
+        
+        
+        // fetches current signed in user
+        Firestore.firestore()
+            .collection("Users").document(userID).getDocument { [weak self] snapshot, error in
+                guard let data = snapshot?.data(), error == nil else {
+                    return
+                }
+                
+                // uses User Struct from structs&extensions file
+                DispatchQueue.main.async {
+                    self?.currentUser = User(ID: data["ID"] as? String ?? "",
+                                      name: data["name"] as? String ?? "",
+                                      email: data["email"] as? String ?? "",
+                                      joined: data["joined"] as? TimeInterval ?? 0)
+                }
+            }
+        
+        print("Fetched user: \(userID)") // for debugging only
+        
+    }
+    
+    // Extract first name from full name
+    var userFirstName: String {
+        guard let fullName = currentUser?.name else {
+            return "User"
+        }
+        let nameComponents = fullName.split(separator: " ")
+        return nameComponents.first.map(String.init) ?? fullName
+    }
 
+    
 }
 
 class ProfileScreenViewModel: ObservableObject {

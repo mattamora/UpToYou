@@ -15,7 +15,7 @@ import FirebaseAuth
 import FirebaseFirestore
 
 public struct Home_Screen: View {
-    // @StateObject var HomeViewModel = HomeScreenViewModel()
+    @StateObject var HomeViewModel = HomeScreenViewModel()
     
     // Navigation Purposes, no need for Home_Screen variable
     @State private var toList_Screen = false
@@ -33,8 +33,32 @@ public struct Home_Screen: View {
                 
                 VStack {
                 
-                    Text("Home")
-                        .foregroundColor(.gray)
+                    // Welcome user, top of the screen, locked to top
+                    VStack(spacing: 15) {
+                        if let _ = HomeViewModel.currentUser {
+                            Text("Welcome, \(HomeViewModel.userFirstName)!")
+                                .foregroundColor(.gray)
+                                .font(.system(size: 30))
+                                .fontWeight(.bold)
+                                .offset(x: -30)
+                        } else {
+                            Text("Welcome!")
+                                .foregroundColor(.gray)
+                                .font(.system(size: 40))
+                                .fontWeight(.bold)
+                                .offset(x: -30)
+                        }
+                       
+                        Divider()
+                            .frame(height: 2)
+                            .background(Color.gray)
+                            .padding(.bottom, 20)
+                    }
+                    .onAppear { HomeViewModel.fetchUser() }
+                    .padding(.top, 10)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.mainColor)
+                    .zIndex(1)
                     
                     // for shuffle or home screen? UI idea
                     // Text("What are you in the mood for?")

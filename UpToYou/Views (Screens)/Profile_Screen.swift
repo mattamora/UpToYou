@@ -46,6 +46,8 @@ struct Profile_Screen: View {
                                 Text("Email:")
                                 Text(currentUser.email)
                                     .underline()
+                                    .lineLimit(1) // Keep on one line
+                                    .minimumScaleFactor(0.5) // Shrinks the text if it's too long, max shrinkage is half
                             }
                             .font(.system(size: 30))
                             .foregroundColor(.gray)
