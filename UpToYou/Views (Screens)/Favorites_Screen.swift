@@ -28,7 +28,19 @@ struct Favorites_Screen: View {
     }
     
     @State private var showSearchSheet = false
-    @State private var searchText = ""
+    @State private var searchRestaurants = ""
+    @State private var searchFavorites = ""
+    
+    // filters favorites to show searched restaurant, shows all restaurants if search bar is empty
+    var filteredFavorites: [FavoriteItemModel] {
+        if searchFavorites.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return faveItems
+        } else {
+            return faveItems.filter { item in
+                item.restoName.lowercased().contains(searchFavorites.lowercased())
+            }
+        }
+    }
 
     
     var body: some View {
@@ -57,9 +69,17 @@ struct Favorites_Screen: View {
                             
                         }
                     
-                        Divider()
-                            .frame(height: 1)
-                            .background(Color.gray)
+                        HStack {
+                            Image(systemName: "magnifyingglass")
+                                .foregroundColor(.gray)
+                            TextField("Search favorites...", text: $searchFavorites)
+                                .foregroundColor(.black)
+                        }
+                        .padding(.horizontal)
+                        .frame(height: 40)
+                        .background(Color.white)
+                        .cornerRadius(10)
+                        .padding(.horizontal)
                     }
                     .padding(.top, 10)
                     .frame(maxWidth: .infinity)
@@ -68,34 +88,39 @@ struct Favorites_Screen: View {
                     
                 
                     
-                    List(faveItems, id: \.ID) { item in
-                        Favorite_Item(item: item)
-                            .listRowInsets(EdgeInsets()) // Removes default List padding
-                            .frame(maxWidth: .infinity) // Forces full width
-                            .listRowSeparatorTint(.white, edges: .bottom)
-                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                            Button(role: .destructive) {
-                                Firestore.firestore()
-                                    .collection("Users").document(userID)
-                                    .collection("Favorite Restaurants").document(item.ID)
-                                    .delete() { error in
-                                        if let error = error {
-                                            print("Error deleting document: \(error.localizedDescription)")
-                                        } else {
-                                            print("Item deleted successfully.")
-                                        }
-                                    }
-                            } label: {
-                                Label("Remove", systemImage: "trash")
-                            }
-                        }
+                    if filteredFavorites.isEmpty {
+                        Text("No Results")
+                            .foregroundColor(.gray)
+                            .padding()
+                    } else {
+                          List(filteredFavorites, id: \.ID) { item in
+                              Favorite_Item(item: item)
+                                  .listRowInsets(EdgeInsets()) // Removes default List padding
+                                  .frame(maxWidth: .infinity) // Forces full width
+                                  .listRowSeparatorTint(.white, edges: .bottom)
+                              .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                  Button(role: .destructive) {
+                                      Firestore.firestore()
+                                          .collection("Users").document(userID)
+                                          .collection("Favorite Restaurants").document(item.ID)
+                                          .delete() { error in
+                                              if let error = error {
+                                                  print("Error deleting document: \(error.localizedDescription)")
+                                              } else {
+                                                  print("Item deleted successfully.")
+                                              }
+                                          }
+                                  } label: {
+                                      Label("Remove", systemImage: "trash")
+                                  }
+                              }
+                          }
+                          .scrollContentBackground(.hidden)
+                          .zIndex(0) // keeps list items under the Favorites when scrolling
+                          .offset(y: 2)
+                          .padding(.top, -50)
+                          .frame(maxHeight: .infinity) // ensure only list scrolls
                     }
-                    .scrollContentBackground(.hidden)
-                    .zIndex(0) // keeps list items under the Favorites when scrolling
-                    .offset(y: 2)
-                    .padding(.top, -50)
-                    .frame(maxHeight: .infinity) // ensure only list scrolls
-                    //.listStyle(.plain) // Optional: Removes extra padding in grouped lists
 
                     
                     // bottom icons, navigation
@@ -176,7 +201,7 @@ struct Favorites_Screen: View {
             } // end of ZStack
             .fullScreenCover(isPresented: $showSearchSheet) {
                 // shows Restaurant_Search view when top right button is clicked
-                Restaurant_Search(showSearchSheet: $showSearchSheet, searchText: $searchText)
+                Restaurant_Search(showSearchSheet: $showSearchSheet, searchText: $searchRestaurants)
             }
         } // end of Navigation Stack
     } // end of body view

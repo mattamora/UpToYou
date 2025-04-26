@@ -330,8 +330,10 @@ class RestaurantSearchViewModel: ObservableObject { // this view is used in the 
 
         isLoading = true
 
-        let apiKey = "RWKuG7rNb1kvwTd8FTvofP8B7PZp7JBl4nGbi7Majn-aDCuu9nunUpwA2wn6SvJttitvFORhiJqLjMLIS9-_R1gmw1DmtS7pi4Qob98yAMmDHuuIVGzy7V-i4WzeZ3Yx"
-        let encodedTerm = term.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? term  // handles restaurants with spaces in their names
+        let apiKey = "F2Xc6ueipAfk-JX4v0WB2zad-OgR-VJouSl1TNXBNB4dNEPRgW3dVaMT9LdyhgQZLbJbssiNAGlF9Q3rtoJTSgHnPUyniUcc04IlbIp91NkT1e2zebBpHQiqDu0LaHYx"
+        
+        let cleanTerm = term.replacingOccurrences(of: " ", with: "")
+        let encodedTerm = cleanTerm.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? cleanTerm // handles restaurants with spaces in their names, joins strings with spaces, Panda Express into PandaExpress. Better for yelps search results.
         let urlString = "https://api.yelp.com/v3/businesses/search?term=\(encodedTerm)&latitude=\(latitude)&longitude=\(longitude)&radius=40000&sort_by=distance&limit=10&categories=restaurants,food"
 
         
@@ -457,7 +459,7 @@ class ListScreenViewModel: ObservableObject {
             categoryParam = "restaurants,food"
         }
 
-        let apiKey = "RWKuG7rNb1kvwTd8FTvofP8B7PZp7JBl4nGbi7Majn-aDCuu9nunUpwA2wn6SvJttitvFORhiJqLjMLIS9-_R1gmw1DmtS7pi4Qob98yAMmDHuuIVGzy7V-i4WzeZ3Yx"
+        let apiKey = "F2Xc6ueipAfk-JX4v0WB2zad-OgR-VJouSl1TNXBNB4dNEPRgW3dVaMT9LdyhgQZLbJbssiNAGlF9Q3rtoJTSgHnPUyniUcc04IlbIp91NkT1e2zebBpHQiqDu0LaHYx"
         let urlString = "https://api.yelp.com/v3/businesses/search?latitude=\(latitude)&longitude=\(longitude)&radius=\(radius)&categories=\(categoryParam)&sort_by=distance&limit=10" // use &sort_by=rating if u want to sort it by highest rating to least
         guard let url = URL(string: urlString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "") else {
             print("Invalid URL")
@@ -625,6 +627,7 @@ class ListScreenViewModel: ObservableObject {
 class ShuffleScreenViewModel: ObservableObject {
     init() {}
     
+    @Published var shuffledRestaurant: FavoriteItemModel? = nil
 
 }
 
@@ -633,7 +636,7 @@ class ShuffleScreenViewModel: ObservableObject {
 
 
 // checks if the user is signed in and modifies the variable isSignedIn accordingly
-// used in the UpToYouApp file in the @main struct 
+// used in the UpToYouApp file in the @main struct
 class AuthViewModel: ObservableObject {
     @Published var isSignedIn: Bool = false
     
@@ -708,5 +711,4 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         checkLocationAuthorization()
     }
 }
-
 
