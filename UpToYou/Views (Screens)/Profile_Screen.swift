@@ -52,6 +52,7 @@ struct Profile_Screen: View {
                             .font(.system(size: 30))
                             .foregroundColor(.gray)
                             .offset(y: 50)
+                            .padding(.horizontal)
                             HStack {
                                 Text("Joined on:")
                                 Text(formattedDate(from: currentUser.joined))

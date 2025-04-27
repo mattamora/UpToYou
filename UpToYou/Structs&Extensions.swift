@@ -96,6 +96,16 @@ struct FavoriteItemModel: Codable {
     let longitude: Double // Needed for directions, arrow button to maps
 }
 
+// an item in the home screen
+struct HomeItemModel: Codable {
+    let ID: String // = UUID() // Unique ID for each item, dont use this for now
+    let restoName: String
+    let picture: String
+    let rating: Double // rating property (0.0 to 5.0), used for stars
+    let latitude: Double // for the distance between the user and the restaurant
+    let longitude: Double // for the distance between the user and the restaurant
+}
+
 
 
 

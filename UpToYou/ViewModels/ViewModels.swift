@@ -212,6 +212,62 @@ class HomeScreenViewModel: ObservableObject {
     // user from firestore databse
     @Published var currentUser: User? = nil
     
+    // first name of the current signed in user
+    @Published var userFirstName: String = ""
+    
+
+    // Fetch User Info, first name specifically
+    func fetchUser() {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+        Firestore.firestore()
+            .collection("Users").document(userID)
+            .getDocument { snapshot, error in
+                guard let data = snapshot?.data(), error == nil else { return }
+                DispatchQueue.main.async {
+                    let fullName = data["name"] as? String ?? ""
+                    self.userFirstName = fullName.components(separatedBy: " ").first ?? ""
+                    self.currentUser = User(ID: userID, name: fullName, email: "", joined: 0)
+                }
+            }
+    }
+
+    // Fetch trending restaurants using Yelp API
+    func fetchTrendingRestaurants(latitude: Double, longitude: Double, completion: @escaping ([Restaurant]) -> Void) {
+        let apiKey = "F2Xc6ueipAfk-JX4v0WB2zad-OgR-VJouSl1TNXBNB4dNEPRgW3dVaMT9LdyhgQZLbJbssiNAGlF9Q3rtoJTSgHnPUyniUcc04IlbIp91NkT1e2zebBpHQiqDu0LaHYx"
+        let urlString = "https://api.yelp.com/v3/businesses/search?latitude=\(latitude)&longitude=\(longitude)&radius=16090&sort_by=distance&limit=10&categories=restaurants"
+
+        guard let url = URL(string: urlString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "") else {
+            print("Invalid URL")
+            completion([])
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            guard let data = data else {
+                print("No data: \(error?.localizedDescription ?? "Unknown error")")
+                completion([])
+                return
+            }
+
+            do {
+                let decoded = try JSONDecoder().decode(YelpSearchResponse.self, from: data)
+                DispatchQueue.main.async {
+                    completion(decoded.restos)
+                }
+            } catch {
+                print("Decoding error: \(error)")
+                completion([])
+            }
+        }.resume()
+    }
+
+
+    
+    /* OG FETCH USER AND FIRST NAME EXTRACTION
     // get specific user from firestore, updates currentUser to actual current user
     func fetchUser() {
         
@@ -241,6 +297,7 @@ class HomeScreenViewModel: ObservableObject {
         print("Fetched user: \(userID)") // for debugging only
         
     }
+     
     
     // Extract first name from full name
     var userFirstName: String {
@@ -250,6 +307,7 @@ class HomeScreenViewModel: ObservableObject {
         let nameComponents = fullName.split(separator: " ")
         return nameComponents.first.map(String.init) ?? fullName
     }
+     */
 
     
 }

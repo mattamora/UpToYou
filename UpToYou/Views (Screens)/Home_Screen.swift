@@ -16,6 +16,9 @@ import FirebaseFirestore
 
 public struct Home_Screen: View {
     @StateObject var HomeViewModel = HomeScreenViewModel()
+    @StateObject var locationManager = LocationManager() // For user location
+    @State private var trendingRestaurants: [Restaurant] = [] // Yelp API restaurants, for the trending nearby section
+    @State private var isLoadingTrending = false
     
     // Navigation Purposes, no need for Home_Screen variable
     @State private var toList_Screen = false
@@ -64,6 +67,61 @@ public struct Home_Screen: View {
                     // Text("What are you in the mood for?")
                     // then put a search bar
                     
+                    VStack(alignment: .leading, spacing: 10) {
+                        Divider()
+                            .frame(height: 1)
+                            .background(Color.gray)
+                        
+                        Text("Trending Nearby")
+                            .font(.system(size: 25))
+                            .bold()
+                            .foregroundColor(.white)
+                            .padding(.horizontal)
+                        
+                        if isLoadingTrending {
+                            ProgressView("Loading nearby restaurants...")
+                                .foregroundColor(.gray)
+                                .padding()
+                        } else {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 15) {
+                                    ForEach(trendingRestaurants, id: \.id) { item in
+                                        let homeItem = HomeItemModel(
+                                            ID: item.id,
+                                            restoName: item.name,
+                                            picture: item.image_url ?? "",
+                                            rating: item.rating,
+                                            latitude: item.coordinates.latitude,
+                                            longitude: item.coordinates.longitude
+                                        )
+                                        Home_Item(item: homeItem)
+                                    }
+                                }
+                                .padding(.horizontal)
+                            }
+                        }
+
+                        Divider()
+                            .frame(height: 1)
+                            .background(Color.gray)
+                    }
+                    .padding(.vertical)
+                    .onAppear {
+                        HomeViewModel.fetchUser()
+                        
+                        // Fetch trending restaurants
+                        if let location = locationManager.userLocation {
+                            isLoadingTrending = true
+                            HomeViewModel.fetchTrendingRestaurants(latitude: location.latitude, longitude: location.longitude) { restos in
+                                trendingRestaurants = restos
+                                isLoadingTrending = false
+                            }
+                        }
+                    }
+
+
+
+                    
                     // to Swift_Notes
                     // delete stack or move it when beginning implementation of this screen
                     NavigationStack {
@@ -71,14 +129,12 @@ public struct Home_Screen: View {
                                        label: {Text("to Swift_notes") })
                     }
     
+                    // bottom icons, navigation
                     Spacer()
-                    
                     Divider()
                         .frame(height: 2)
                         .background(Color.gray)
                         .padding(.bottom, 20)
-                    
-                    // bottom icons, navigation
                     HStack {
                         Spacer()
                         VStack {
