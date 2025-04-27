@@ -17,15 +17,27 @@ import FirebaseFirestore
 public struct Home_Screen: View {
     @StateObject var HomeViewModel = HomeScreenViewModel()
     @StateObject var locationManager = LocationManager() // For user location
-    @State private var trendingRestaurants: [Restaurant] = [] // Yelp API restaurants, for the trending nearby section
-    @State private var isLoadingTrending = false
+    
+    // Section variables, trending, rated, on a budget, todays pick
+    @State private var trendingRestaurants: [Restaurant] = []
+    @State private var isLoadingTrending = true
+    @State private var highlyRatedRestaurants: [Restaurant] = []
+    @State private var isLoadingHighlyRated = true
+    @State private var budgetRestaurants: [Restaurant] = []
+    @State private var isLoadingBudget = true
+    @FirestoreQuery var faveItems: [FavoriteItemModel]
+    init() {
+        let userID = Auth.auth().currentUser?.uid ?? "no-user"
+        self._faveItems = FirestoreQuery(collectionPath: "Users/\(userID)/Favorite Restaurants")
+    }
+   
+
     
     // Navigation Purposes, no need for Home_Screen variable
     @State private var toList_Screen = false
     @State private var toProfile_Screen = false
     @State private var toShuffle_Screen = false
     @State private var toFavorites_Screen = false
-    //@State private var showLoginScreen = false
     @State private var showProfileScreen = false
     
     
@@ -35,7 +47,7 @@ public struct Home_Screen: View {
                 Color.mainColor.ignoresSafeArea()
                 
                 VStack {
-                
+                    
                     // Welcome user, top of the screen, locked to top
                     VStack(spacing: 15) {
                         if let _ = HomeViewModel.currentUser {
@@ -43,19 +55,21 @@ public struct Home_Screen: View {
                                 .foregroundColor(.gray)
                                 .font(.system(size: 30))
                                 .fontWeight(.bold)
-                                .offset(x: -30)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .offset(x: 15)
                         } else {
                             Text("Welcome!")
                                 .foregroundColor(.gray)
                                 .font(.system(size: 40))
                                 .fontWeight(.bold)
-                                .offset(x: -30)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .offset(x: 15)
                         }
                        
                         Divider()
                             .frame(height: 2)
                             .background(Color.gray)
-                            .padding(.bottom, 20)
+                            //.padding(.bottom, 20)
                     }
                     .onAppear { HomeViewModel.fetchUser() }
                     .padding(.top, 10)
@@ -66,69 +80,205 @@ public struct Home_Screen: View {
                     // for shuffle or home screen? UI idea
                     // Text("What are you in the mood for?")
                     // then put a search bar
+
                     
-                    VStack(alignment: .leading, spacing: 10) {
-                        Divider()
-                            .frame(height: 1)
-                            .background(Color.gray)
-                        
-                        Text("Trending Nearby")
-                            .font(.system(size: 25))
-                            .bold()
-                            .foregroundColor(.white)
-                            .padding(.horizontal)
-                        
-                        if isLoadingTrending {
-                            ProgressView("Loading nearby restaurants...")
-                                .foregroundColor(.gray)
-                                .padding()
-                        } else {
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 15) {
-                                    ForEach(trendingRestaurants, id: \.id) { item in
-                                        let homeItem = HomeItemModel(
-                                            ID: item.id,
-                                            restoName: item.name,
-                                            picture: item.image_url ?? "",
-                                            rating: item.rating,
-                                            latitude: item.coordinates.latitude,
-                                            longitude: item.coordinates.longitude
-                                        )
-                                        Home_Item(item: homeItem)
+                    
+                    // Scrollable content
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 20) {
+    
+                            // Trending nearby restaurants
+                            VStack(alignment: .leading) {
+                                Divider()
+                                    .frame(height: 0.5)
+                                    .background(Color.gray)
+                                
+                                Text("Trending nearby")
+                                    .font(.system(size: 25))
+                                    .bold()
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal)
+                                
+                                if isLoadingTrending {
+                                    ProgressView("Loading nearby restaurants...")
+                                        .foregroundColor(.gray)
+                                        .padding()
+                                } else if trendingRestaurants.isEmpty {
+                                    Text("No trending restaurants found.")
+                                        .foregroundColor(.gray)
+                                        .padding()
+                                } else {
+                                    ScrollView(.horizontal, showsIndicators: false) {
+                                        HStack(spacing: 15) {
+                                            ForEach(trendingRestaurants, id: \.id) { item in
+                                                let homeItem = HomeItemModel(
+                                                    ID: item.id,
+                                                    restoName: item.name,
+                                                    picture: item.image_url ?? "",
+                                                    rating: item.rating,
+                                                    latitude: item.coordinates.latitude,
+                                                    longitude: item.coordinates.longitude
+                                                )
+                                                Home_Item(item: homeItem)
+                                            }
+                                        }
+                                        .padding(.horizontal)
+                                        //.frame(height: 280)
                                     }
                                 }
-                                .padding(.horizontal)
                             }
-                        }
-
-                        Divider()
-                            .frame(height: 1)
-                            .background(Color.gray)
-                    }
-                    .padding(.vertical)
-                    .onAppear {
-                        HomeViewModel.fetchUser()
-                        
-                        // Fetch trending restaurants
-                        if let location = locationManager.userLocation {
-                            isLoadingTrending = true
-                            HomeViewModel.fetchTrendingRestaurants(latitude: location.latitude, longitude: location.longitude) { restos in
-                                trendingRestaurants = restos
-                                isLoadingTrending = false
+                            .onChange(of: locationManager.userLocation?.latitude) { _ in
+                                if let location = locationManager.userLocation {
+                                    print("Got user location: \(location.latitude), \(location.longitude)")
+                                    isLoadingTrending = true
+                                    HomeViewModel.fetchTrendingRestaurants(latitude: location.latitude, longitude: location.longitude) { restos in
+                                        trendingRestaurants = restos
+                                        isLoadingTrending = false
+                                    }
+                                }
                             }
+                            
+                            // Highly Rated Restaurants
+                            VStack(alignment: .leading) {
+                                Divider()
+                                    .frame(height: 0.5)
+                                    .background(Color.gray)
+                                    .padding(.top)
+
+                                Text("Highly Rated")
+                                    .font(.system(size: 25))
+                                    .bold()
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal)
+
+                                if isLoadingHighlyRated {
+                                    ProgressView("Loading highly rated spots...")
+                                        .foregroundColor(.gray)
+                                        .padding()
+                                } else if highlyRatedRestaurants.isEmpty {
+                                    Text("No highly rated restaurants found.")
+                                        .foregroundColor(.gray)
+                                        .padding()
+                                } else {
+                                    ScrollView(.horizontal, showsIndicators: false) {
+                                        HStack(spacing: 15) {
+                                            ForEach(highlyRatedRestaurants, id: \.id) { item in
+                                                let homeItem = HomeItemModel(
+                                                    ID: item.id,
+                                                    restoName: item.name,
+                                                    picture: item.image_url ?? "",
+                                                    rating: item.rating,
+                                                    latitude: item.coordinates.latitude,
+                                                    longitude: item.coordinates.longitude
+                                                )
+                                                Home_Item(item: homeItem)
+                                            }
+                                        }
+                                        .padding(.horizontal)
+                                    }
+                                }
+                            }
+                            .onChange(of: locationManager.userLocation?.latitude) { _ in
+                                if let location = locationManager.userLocation {
+                                    isLoadingHighlyRated = true
+                                    HomeViewModel.fetchHighlyRatedRestaurants(latitude: location.latitude, longitude: location.longitude) { restos in
+                                        highlyRatedRestaurants = restos
+                                        isLoadingHighlyRated = false
+                                    }
+                                }
+                            }
+                            
+                            // On a budget restaurants
+                            VStack(alignment: .leading) {
+                                Divider()
+                                    .frame(height: 0.5)
+                                    .background(Color.gray)
+                                    .padding(.top)
+
+                                Text("On a budget")
+                                    .font(.system(size: 25))
+                                    .bold()
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal)
+
+                                if isLoadingBudget {
+                                    ProgressView("Finding affordable spots...")
+                                        .foregroundColor(.gray)
+                                        .padding()
+                                } else if budgetRestaurants.isEmpty {
+                                    Text("No budget-friendly restaurants found.")
+                                        .foregroundColor(.gray)
+                                        .padding()
+                                } else {
+                                    ScrollView(.horizontal, showsIndicators: false) {
+                                        HStack(spacing: 15) {
+                                            ForEach(budgetRestaurants, id: \.id) { item in
+                                                let homeItem = HomeItemModel(
+                                                    ID: item.id,
+                                                    restoName: item.name,
+                                                    picture: item.image_url ?? "",
+                                                    rating: item.rating,
+                                                    latitude: item.coordinates.latitude,
+                                                    longitude: item.coordinates.longitude
+                                                )
+                                                Home_Item(item: homeItem)
+                                            }
+                                        }
+                                        .padding(.horizontal)
+                                    }
+                                }
+                            }
+                            .onChange(of: locationManager.userLocation?.latitude) { _ in
+                                if let location = locationManager.userLocation {
+                                    isLoadingBudget = true
+                                    HomeViewModel.fetchBudgetRestaurants(latitude: location.latitude, longitude: location.longitude) { restos in
+                                        budgetRestaurants = restos
+                                        isLoadingBudget = false
+                                    }
+                                }
+                            }
+                            
+                            // Today’s Pick Section
+                            VStack(alignment: .leading) {
+                                Divider()
+                                    .frame(height: 0.5)
+                                    .background(Color.gray)
+                                    .padding(.top)
+
+                                Text("Today’s pick!")
+                                    .font(.system(size: 25))
+                                    .bold()
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal)
+
+                                if let pick = HomeViewModel.todaysPick {
+                                    let homeItem = HomeItemModel(
+                                        ID: pick.ID,
+                                        restoName: pick.restoName,
+                                        picture: pick.picture,
+                                        rating: pick.rating,
+                                        latitude: pick.latitude,
+                                        longitude: pick.longitude
+                                    )
+                                    Home_Item(item: homeItem)
+                                        .padding(.horizontal)
+                                } else {
+                                    Text("No favorites to pick from yet.")
+                                        .foregroundColor(.gray)
+                                        .padding()
+                                }
+                            }
+                            .onChange(of: faveItems) { newFavorites in
+                                if !newFavorites.isEmpty && HomeViewModel.todaysPick == nil {
+                                    HomeViewModel.loadTodaysPick(from: newFavorites)
+                                }
+                            }
+
                         }
-                    }
-
-
-
+                        .padding(.bottom, 60) // Leave room for bottom nav
                     
-                    // to Swift_Notes
-                    // delete stack or move it when beginning implementation of this screen
-                    NavigationStack {
-                        NavigationLink(destination: swift_notes_code(),
-                                       label: {Text("to Swift_notes") })
                     }
-    
+
                     // bottom icons, navigation
                     Spacer()
                     Divider()
@@ -213,3 +363,12 @@ public struct Home_Screen: View {
     Home_Screen()
 }
 
+
+
+// to Swift_Notes
+// delete stack or move it when beginning implementation of this screen
+/*
+NavigationStack {
+    NavigationLink(destination: swift_notes_code(),
+                   label: {Text("to Swift_notes") })
+} */

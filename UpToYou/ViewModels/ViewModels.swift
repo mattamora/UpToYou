@@ -231,10 +231,14 @@ class HomeScreenViewModel: ObservableObject {
             }
     }
 
-    // Fetch trending restaurants using Yelp API
+    // Fetch trending restaurants using Yelp API, within 10 miles
     func fetchTrendingRestaurants(latitude: Double, longitude: Double, completion: @escaping ([Restaurant]) -> Void) {
         let apiKey = "F2Xc6ueipAfk-JX4v0WB2zad-OgR-VJouSl1TNXBNB4dNEPRgW3dVaMT9LdyhgQZLbJbssiNAGlF9Q3rtoJTSgHnPUyniUcc04IlbIp91NkT1e2zebBpHQiqDu0LaHYx"
-        let urlString = "https://api.yelp.com/v3/businesses/search?latitude=\(latitude)&longitude=\(longitude)&radius=16090&sort_by=distance&limit=10&categories=restaurants"
+        let radiusInMeters = 16093 // 10 miles
+
+        let urlString = """
+        https://api.yelp.com/v3/businesses/search?latitude=\(latitude)&longitude=\(longitude)&radius=\(radiusInMeters)&sort_by=review_count&limit=50&categories=restaurants
+        """
 
         guard let url = URL(string: urlString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "") else {
             print("Invalid URL")
@@ -255,8 +259,23 @@ class HomeScreenViewModel: ObservableObject {
 
             do {
                 let decoded = try JSONDecoder().decode(YelpSearchResponse.self, from: data)
+
+                // Strict filter: Only within 10 miles (Yelp sometimes overflows radius)
+                let maxDistanceMeters = 16093.4 // 10 miles
+                let filtered = decoded.restos.filter { $0.distance <= maxDistanceMeters }
+
+                // Sort: highest review count + rating (optional combo)
+                let sorted = filtered.sorted {
+                    if $0.rating == $1.rating {
+                        return $0.distance < $1.distance // tie-breaker by distance
+                    }
+                    return $0.rating > $1.rating
+                }
+
+                let topTrending = sorted.prefix(10)
+
                 DispatchQueue.main.async {
-                    completion(decoded.restos)
+                    completion(Array(topTrending))
                 }
             } catch {
                 print("Decoding error: \(error)")
@@ -264,10 +283,150 @@ class HomeScreenViewModel: ObservableObject {
             }
         }.resume()
     }
-
-
     
-    /* OG FETCH USER AND FIRST NAME EXTRACTION
+    // Fetch highly rated restaurants using Yelp API, within 25 miles, 300+ reviews, 4+ stars
+    func fetchHighlyRatedRestaurants(latitude: Double, longitude: Double, completion: @escaping ([Restaurant]) -> Void) {
+        let apiKey = "F2Xc6ueipAfk-JX4v0WB2zad-OgR-VJouSl1TNXBNB4dNEPRgW3dVaMT9LdyhgQZLbJbssiNAGlF9Q3rtoJTSgHnPUyniUcc04IlbIp91NkT1e2zebBpHQiqDu0LaHYx"
+        let radiusInMeters = 32186 // 20 miles EXACT
+
+        let urlString = """
+        https://api.yelp.com/v3/businesses/search?latitude=\(latitude)&longitude=\(longitude)&radius=\(radiusInMeters)&sort_by=review_count&limit=50&categories=restaurants
+        """
+
+        guard let url = URL(string: urlString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "") else {
+            print("Invalid URL")
+            completion([])
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            guard let data = data else {
+                print("No data: \(error?.localizedDescription ?? "Unknown error")")
+                completion([])
+                return
+            }
+
+            do {
+                let decoded = try JSONDecoder().decode(YelpSearchResponse.self, from: data)
+
+                // STRICT distance filter + review + rating
+                let strictMaxDistance = 32186.0 // 20 miles in meters
+
+                let filteredHighlyRated = decoded.restos
+                    .filter {
+                        $0.rating >= 4.0 &&
+                        $0.review_count >= 300 &&
+                        $0.distance <= strictMaxDistance // Force strictly ≤ 20 miles
+                    }
+                    .sorted {
+                        // Sort: highest review count, then rating
+                        if $0.review_count == $1.review_count {
+                            return $0.rating > $1.rating
+                        } else {
+                            return $0.review_count > $1.review_count
+                        }
+                    }
+
+                let top10 = filteredHighlyRated.prefix(10)
+
+                DispatchQueue.main.async {
+                    completion(Array(top10))
+                }
+            } catch {
+                print("Decoding error: \(error)")
+                completion([])
+            }
+        }.resume()
+    }
+    
+    // Fetch cheap restaurants using Yelp API, within 20 miles, $ price, 4+ stars
+    func fetchBudgetRestaurants(latitude: Double, longitude: Double, completion: @escaping ([Restaurant]) -> Void) {
+        let apiKey = "F2Xc6ueipAfk-JX4v0WB2zad-OgR-VJouSl1TNXBNB4dNEPRgW3dVaMT9LdyhgQZLbJbssiNAGlF9Q3rtoJTSgHnPUyniUcc04IlbIp91NkT1e2zebBpHQiqDu0LaHYx"
+        let radiusInMeters = 32186 // 20 miles
+
+        let urlString = """
+        https://api.yelp.com/v3/businesses/search?latitude=\(latitude)&longitude=\(longitude)&radius=\(radiusInMeters)&price=1&sort_by=best_match&limit=50&categories=restaurants
+        """
+
+        guard let url = URL(string: urlString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "") else {
+            print("Invalid URL")
+            completion([])
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            guard let data = data else {
+                print("No data: \(error?.localizedDescription ?? "Unknown error")")
+                completion([])
+                return
+            }
+
+            do {
+                let decoded = try JSONDecoder().decode(YelpSearchResponse.self, from: data)
+                let filteredBudget = decoded.restos
+                    .filter {
+                        $0.rating >= 4.0 &&
+                        $0.distance <= Double(radiusInMeters)
+                    }
+                    .shuffled() // Randomize
+
+                let top10 = filteredBudget.prefix(10)
+
+                DispatchQueue.main.async {
+                    completion(Array(top10))
+                }
+            } catch {
+                print("Decoding error: \(error)")
+                completion([])
+            }
+        }.resume()
+    }
+    
+    // Todays pick, random restaurant from user favorites
+    @Published var todaysPick: FavoriteItemModel? = nil
+    func loadTodaysPick(from favorites: [FavoriteItemModel]) {
+        // Check if we have a stored pick and it's still valid
+        if let storedPickData = UserDefaults.standard.data(forKey: "todaysPick"),
+           let storedPick = try? JSONDecoder().decode(FavoriteItemModel.self, from: storedPickData),
+           let storedTime = UserDefaults.standard.object(forKey: "todaysPickTime") as? Date {
+            
+            let twelveHoursLater = storedTime.addingTimeInterval(12 * 60 * 60)
+            
+            if Date() < twelveHoursLater {
+                // Within 12 hours, use stored pick
+                self.todaysPick = storedPick
+                return
+            }
+        }
+
+        // Otherwise, pick a new random favorite
+        if let newPick = favorites.randomElement() {
+            self.todaysPick = newPick
+
+            // Save to UserDefaults
+            if let encoded = try? JSONEncoder().encode(newPick) {
+                UserDefaults.standard.set(encoded, forKey: "todaysPick")
+                UserDefaults.standard.set(Date(), forKey: "todaysPickTime")
+            }
+        }
+    }
+
+
+
+
+
+
+
+
+    /* OG FETCH USER AND FIRST NAME EXTRACTION, feel free to delete when home screen is all done
     // get specific user from firestore, updates currentUser to actual current user
     func fetchUser() {
         

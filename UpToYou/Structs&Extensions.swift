@@ -52,6 +52,7 @@ struct Restaurant: Decodable {
     let location: Location
     let image_url: String?
     let rating: Double
+    let review_count: Int // used in home screen, Highly rated
     let coordinates: Coordinates // latitude and longitude
     let url: String
     let distance: Double // Yelp provides this in meters, used becuase filter for miles is not entirely accurate
@@ -86,7 +87,7 @@ struct User: Codable {
 }
 
 // an item in the favorites
-struct FavoriteItemModel: Codable {
+struct FavoriteItemModel: Codable, Equatable  {
     let ID: String // = UUID() // Unique ID for each item, dont use this for now
     let restoName: String
     let location: String // city, state

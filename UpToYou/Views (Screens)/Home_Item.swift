@@ -34,7 +34,6 @@ struct Home_Item: View {
     
     var body: some View {
         ZStack {
-            Color.mainColor.ignoresSafeArea()
             VStack (spacing: 4) {
                 
                 //  load an image from a URL over the internet
@@ -47,12 +46,9 @@ struct Home_Item: View {
                     // shows while the image is still loading
                     // spinning loading circle (standard iOS style)
                     // goes away automatically when the image finishes loading
-                    Image("CAVA")
-                        .resizable()
-                        .scaledToFill()
-                    //ProgressView()
+                    ProgressView()
                 }
-                .frame(width: 280, height: 180)
+                .frame(width: 260, height: 160)
                 .cornerRadius(10)
                 .clipped() // ensures cropped edges don't overflow
                     
@@ -62,6 +58,8 @@ struct Home_Item: View {
                         .bold()
                         .font(.system(size: 25))
                         .foregroundColor(.white)
+                        .lineLimit(1) // Keep on one line
+                        .minimumScaleFactor(0.5) // Shrinks the text if it's too long, max shrinkage is half
                     
                     Spacer()
                     
@@ -73,13 +71,12 @@ struct Home_Item: View {
                             .foregroundColor(.white)
                     }
                 }
-                .frame(width: 280)
+                .frame(width: 260)
                 .padding([.top, .horizontal], 7)
                 
                 StarRatingView(rating: item.rating)
-                    //.offset(y: -10)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .offset(x: 60)
+                    
                 
                 // distance as clickable Apple Maps link
                 Button {
@@ -90,13 +87,11 @@ struct Home_Item: View {
                         .font(.system(size: 12))
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .offset(x: 60)
                 }
             
 
             } // end of HStack
-            .frame(maxWidth: .infinity) //  Expands row fully
-            .padding([.top, .bottom], 15) //  Adds padding for spacing
+            .frame(width: 260) // or whatever size matches the image
         }
     } // end of body View
     
