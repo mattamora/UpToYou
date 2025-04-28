@@ -12,7 +12,8 @@ struct Profile_Screen: View {
     @StateObject var profileViewModel = ProfileScreenViewModel()
     
     // for handling location, viewing current location
-    @StateObject private var locationManager = LocationManager()
+    // @StateObject private var locationManager = LocationManager()
+    @ObservedObject private var locationManager = LocationManager.shared
     
     // Navigation Purposes, no need for Profile_Screen
     @State private var toHome_Screen = false

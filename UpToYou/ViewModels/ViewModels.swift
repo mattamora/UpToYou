@@ -10,6 +10,7 @@ import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
 import CoreLocation
+import UIKit
 
 
 // for user login, used in Login_Screen
@@ -572,7 +573,7 @@ class FavoritesScreenViewModel: ObservableObject {
     }
 }
 
-class RestaurantSearchViewModel: ObservableObject { // this view is used in the Favorites_Screen, shows 10 restaurants only for nowte
+class RestaurantSearchViewModel: ObservableObject { // this view is used in the Favorites_Screen and List_Screen, shows 10 restaurants only for now
     
     @Published var results: [Restaurant] = []
     @Published var isLoading = false
@@ -689,195 +690,175 @@ class RestaurantSearchViewModel: ObservableObject { // this view is used in the 
             print("Encoding error: \(error)")
         }
     }
+    
+    
 
 }
 
 class ListScreenViewModel: ObservableObject {
-    init() {}
-    
-    @Published var restaurants: [Restaurant] = []
-    @Published var isLoading: Bool = false
+    @Published var userLists: [CustomList] = []
 
-    // API stuff, Using Yelp Fusion API to get restaurants
-    func fetchYelpRestaurants(latitude: Double, longitude: Double, distanceInMiles: Int, foodType: FoodType) {
-        
-        isLoading = true // show loading if data fetch is taking too long
-        restaurants = [] // Clear old results
-        
-        // Convert miles to meters (1 mile = 1609.34 meters), Yelp only takes in meters, Yelp max is 40,000 meters or 25 miles
-        let radius = min(Int(Double(distanceInMiles) * 1609.34), 40000)
-        
-        // for the food type filter
-        let categoryParam: String
-        if let category = foodType.yelpCategory {
-            categoryParam = category
-        } else {
-            categoryParam = "restaurants,food"
-        }
+    func fetchUserLists() {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
 
-        let apiKey = "F2Xc6ueipAfk-JX4v0WB2zad-OgR-VJouSl1TNXBNB4dNEPRgW3dVaMT9LdyhgQZLbJbssiNAGlF9Q3rtoJTSgHnPUyniUcc04IlbIp91NkT1e2zebBpHQiqDu0LaHYx"
-        let urlString = "https://api.yelp.com/v3/businesses/search?latitude=\(latitude)&longitude=\(longitude)&radius=\(radius)&categories=\(categoryParam)&sort_by=distance&limit=10" // use &sort_by=rating if u want to sort it by highest rating to least
-        guard let url = URL(string: urlString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "") else {
-            print("Invalid URL")
-            isLoading = false
-            return
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            DispatchQueue.main.async {
-                self.isLoading = false
-            }
-
-            if let error = error {
-                print("Request error: \(error.localizedDescription)")
-                return
-            }
-
-            guard let data = data else {
-                print("No data received")
-                return
-            }
-
-            do {
-                let decodedResponse = try JSONDecoder().decode(YelpSearchResponse.self, from: data)
-
-                // some restaurants, farther than the within mile disatnce, appear in the search results, so this changes that
-                let maxDistanceMeters = Double(distanceInMiles) * 1609.34
-                let filtered = decodedResponse.restos.filter {
-                    $0.distance <= maxDistanceMeters
+        Firestore.firestore()
+            .collection("Users").document(userID)
+            .collection("Lists")
+            .order(by: "createdDate", descending: true)
+            .getDocuments { snapshot, error in
+                if let error = error {
+                    print("Error fetching lists: \(error.localizedDescription)")
+                    return
                 }
 
-                DispatchQueue.main.async {
-                    self.restaurants = filtered
+                guard let documents = snapshot?.documents else {
+                    print("No documents found")
+                    return
                 }
-                
-            } catch {
-                print("Decoding error: \(error.localizedDescription)")
-            }
 
-        }.resume()
-    }
-
-    
-    // Favorite_Item view expects a FavoriteItemModel, but Yelp API gives you Restaurant, so we make a small converter function.
-    // used to input Yelp data into Favorite_Item view
-    func convertToFavoriteModel(_ r: Restaurant) -> FavoriteItemModel {
-        return FavoriteItemModel(
-            ID: r.url,
-            restoName: r.name,
-            location: "\(r.location.city), \(r.location.state)",
-            picture: r.image_url ?? "placeholder_image", // default fallback
-            rating: r.rating,
-            latitude: r.coordinates.latitude,
-            longitude: r.coordinates.longitude
-        )
-    }
-
-    
-    // OG code for this model
-    /*
-    // for now using this to add an item to favorites
-    @Published var restoName = ""  // Restaurant Name
-    @Published var location = ""  // location  city,state format, ex. La Habra, CA    Los Angeles, CA
-    @Published var picture = ""  // image name, picture of restaurant  Image("")
-    @Published var ratingInput = "" // rating of restaurant 0.0-5.0, number of stars to show
-    @Published var longitude = 0.0  // for arrow button
-    @Published var latitude = 0.0  // for arrow button
-    
-    
-    // saves data to firebase collection
-    func saveToFirebase() {
-        
-        // makes sure there is data by calling canSave variable
-        guard canSave else {
-            print("Empty data fields") // for debugging only
-            return
-        }
-        
-        // restaurant rating, uses ratingInput to convert into a double
-        guard let rating = Double(ratingInput), rating >= 0.0, rating <= 5.0 else {
-            print("Invalid rating. Enter a number between 0.0 and 5.0.") //  Validation
-            return
-        }
-
-        // get current user id
-        // Auth.auth() is from Firebase Authentication, used to manage user sign-in states
-        // Each Firebase user has a unique identifier called a User ID (UID), currentUser?.uid tries to access the user's UID,
-        // ? is used because if there's no user signed in (currentUser is nil), this safely returns nil instead of causing a crash.
-        guard let userID = Auth.auth().currentUser?.uid else {
-            print("No user is signed in. Stopping function.") // for debugging only
-            return
-        }
-        print("User is signed in with ID: \(userID)") // for debugging only
-        
-        
-        
-        // create a model for the data to be added into the collection
-        // UUID() generates a completely unique identifier (UUID)
-        let newID = UUID().uuidString   // every time this line runs, it gives you a brand new, unique string that can never repeat
-        let newItem = FavoriteItemModel(ID: newID,
-                                        restoName: restoName,  // restaurant name
-                                        location: location,  // location  city, state
-                                        picture: picture, // image name from assets
-                                        rating: rating,
-                                        latitude: latitude,
-                                        longitude: longitude)
-        
-        
-        
-        // saves data into a firebase collection
-        do {
-            // convert newItem to dictionary format
-            let dataDictionary = try DictionaryEncoder().encode(newItem)
-            
-            // Firestore.firestore() initializes and provides a reference to your Firestore database, connects your app to your Firestore database hosted by Firebase
-            // collection in Firestore is like a folder that stores multiple documents.
-            // a document in Firestore stores data in key-value pairs
-            // Firestore supports nesting collections inside documents, called sub-collections
-            Firestore.firestore()
-                .collection("Users")   // collection of users, access or create (if it doesn’t already exist) a collection named "users"
-                .document(userID)          // specific user, .document(userID) retrieves a specific document inside the collection, userID in this case
-                .collection("Sample Favorites") // sub-collection in a specific user, another smaller folder within that user's specific document
-                .document(newID)           // new data within the "Sample Data" sub-collection, If it doesn't exist, Firestore will automatically create it
-                .setData(dataDictionary) { error in // creates or overwrites the document data with the data provided
-                    if let error = error {
-                        print("Error saving data: \(error.localizedDescription)")
-                    } else {
-                        print("Data successfully saved with ID: \(newID)")
+                self.userLists = documents.compactMap { doc in
+                    do {
+                        let list = try doc.data(as: CustomList.self)
+                        print("Fetched list: \(list.name)") // DEBUG: Show fetched list names
+                        return list
+                    } catch {
+                        print("Decoding error for document \(doc.documentID): \(error.localizedDescription)")
+                        return nil
                     }
                 }
-        } catch {
-            print("Error encoding newData: \(error.localizedDescription)")  // for debugging only
-        }
-        
-    } // end of saveToFirebase()
+            }
+    }
+
+}
+
+class CreateListViewModel: ObservableObject {
+    @Published var listTitle: String = ""
+    @Published var selectedImage: UIImage? = nil
+    @Published var selectedRestaurants: [Restaurant] = []
+    @Published var searchText: String = ""
+    @Published var showImagePicker: Bool = false
+    @Published var showRestaurantSearchSheet: Bool = false
+    @Published var showErrorAlert: Bool = false
     
-    // to maake sure data form is not empty
-    var canSave: Bool {
-        guard !restoName.trimmingCharacters(in: .whitespaces).isEmpty else {
-            return false
+    func saveListToFirebase() {
+        guard let userID = Auth.auth().currentUser?.uid else {
+            print("No user logged in")
+            return
         }
-        
-        guard !location.trimmingCharacters(in: .whitespaces).isEmpty else {
-            return false
+
+        let restaurantDataArray: [[String: Any]] = selectedRestaurants.map { restaurant in
+            return [
+                "id": restaurant.id,
+                "name": restaurant.name,
+                "image_url": restaurant.image_url ?? "",
+                "rating": restaurant.rating,
+                "location": [
+                    "address1": restaurant.location.address1 ?? "",
+                    "city": restaurant.location.city,
+                    "state": restaurant.location.state
+                ],
+                "coordinates": [
+                    "latitude": restaurant.coordinates.latitude,
+                    "longitude": restaurant.coordinates.longitude
+                ]
+            ]
         }
-        
-        guard !picture.trimmingCharacters(in: .whitespaces).isEmpty else {
-            return false
-        }
-        
-        guard !ratingInput.trimmingCharacters(in: .whitespaces).isEmpty else {
-            return false
-        }
-       
-        
-        return true
-    } */
+
+        let newList = CustomList(
+            id: nil,
+            name: listTitle,
+            restaurantIDs: selectedRestaurants.map { $0.id },
+            createdDate: Date()
+        )
+
+        let data: [String: Any] = [
+            "name": newList.name,
+            "createdDate": Timestamp(date: newList.createdDate),
+            "restaurants": restaurantDataArray
+        ]
+
+        Firestore.firestore()
+            .collection("Users").document(userID)
+            .collection("Lists").addDocument(data: data) { error in
+                if let error = error {
+                    print("Error saving list: \(error.localizedDescription)")
+                } else {
+                    print("List saved successfully")
+                }
+            }
+    }
+
+
     
+    
+}
+
+class ListSheetViewModel: ObservableObject {
+    let list: CustomList
+    @Published var favoriteItems: [FavoriteItemModel] = []
+
+    init(list: CustomList) {
+        self.list = list
+        fetchRestaurantsFromListDocument()
+    }
+
+    var formattedDate: String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        return formatter.string(from: list.createdDate)
+    }
+
+    // Fetch restaurants stored in the 'restaurants' field of this list
+    private func fetchRestaurantsFromListDocument() {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+        let db = Firestore.firestore()
+
+        db.collection("Users").document(userID).collection("Lists").document(list.id ?? "")
+            .getDocument { snapshot, error in
+                if let data = snapshot?.data() {
+                    if let restaurantsArray = data["restaurants"] as? [[String: Any]] {
+                        var fetchedItems: [FavoriteItemModel] = []
+                        for restaurantData in restaurantsArray {
+                            if let id = restaurantData["id"] as? String,
+                               let name = restaurantData["name"] as? String,
+                               let picture = restaurantData["image_url"] as? String,
+                               let rating = restaurantData["rating"] as? Double,
+                               let locationDict = restaurantData["location"] as? [String: Any],
+                               let city = locationDict["city"] as? String,
+                               let state = locationDict["state"] as? String,
+                               let coordinatesDict = restaurantData["coordinates"] as? [String: Any],
+                               let latitude = coordinatesDict["latitude"] as? Double,
+                               let longitude = coordinatesDict["longitude"] as? Double {
+
+                                let locationString = "\(city), \(state)"
+
+                                let item = FavoriteItemModel(
+                                    ID: id,
+                                    restoName: name,
+                                    location: locationString,
+                                    picture: picture,
+                                    rating: rating,
+                                    latitude: latitude,
+                                    longitude: longitude
+                                )
+
+                                fetchedItems.append(item)
+                            } else {
+                                print("Error mapping restaurant: \(restaurantData)")
+                            }
+                        }
+                        DispatchQueue.main.async {
+                            self.favoriteItems = fetchedItems
+                        }
+                    } else {
+                        print("No restaurants found in list document")
+                    }
+                } else if let error = error {
+                    print("Error fetching list document: \(error.localizedDescription)")
+                }
+            }
+    }
+
 }
 
 class ShuffleScreenViewModel: ObservableObject {
@@ -908,17 +889,22 @@ class AuthViewModel: ObservableObject {
 }
 
 
+
+
 // asks the user if the app can view their location
 // currently using MapKit and CLLocationManager().requestWhenInUseAuthorization() to ask for location permission
 // manage current location, used in Restaurant_Search, Profile_Screen,
 class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
+    static let shared = LocationManager()  // Singleton Instance
+
     private let manager = CLLocationManager()
 
     @Published var userLocation: CLLocationCoordinate2D?
     @Published var permissionDenied: Bool = false
-    @Published var cityAndState: String? = nil  // string version of latitude and longitude, "city, state", shown in Profile_Screen
+    @Published var cityAndState: String? = nil  // "city, state", for Profile_Screen
 
-    override init() {
+    // 🔒 Make init private so no one else creates new instances
+    private override init() {
         super.init()
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyBest
@@ -938,16 +924,13 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
 
-    
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
 
-        // Save coordinate for map/search usage
         DispatchQueue.main.async {
             self.userLocation = location.coordinate
         }
 
-        // Reverse geocode for city + state display, in Profile_Screen, updates this classes cityAndState based on current latitude and longitude
         let geocoder = CLGeocoder()
         geocoder.reverseGeocodeLocation(location) { placemarks, error in
             if let placemark = placemarks?.first {
@@ -961,7 +944,6 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             }
         }
     }
-
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         checkLocationAuthorization()

@@ -16,7 +16,8 @@ import FirebaseFirestore
 
 public struct Home_Screen: View {
     @StateObject var HomeViewModel = HomeScreenViewModel()
-    @StateObject var locationManager = LocationManager() // For user location
+    // @StateObject var locationManager = LocationManager() // For user location
+    @ObservedObject private var locationManager = LocationManager.shared
     
     // Section variables, trending, rated, on a budget, todays pick
     @State private var trendingRestaurants: [Restaurant] = []
@@ -25,13 +26,17 @@ public struct Home_Screen: View {
     @State private var isLoadingHighlyRated = true
     @State private var budgetRestaurants: [Restaurant] = []
     @State private var isLoadingBudget = true
-    @FirestoreQuery var faveItems: [FavoriteItemModel]
+    @FirestoreQuery var faveItems: [FavoriteItemModel] // todays top pick
     init() {
         let userID = Auth.auth().currentUser?.uid ?? "no-user"
         self._faveItems = FirestoreQuery(collectionPath: "Users/\(userID)/Favorite Restaurants")
     }
-   
-
+    
+    // to fix issue of constant refreshing
+    @State private var trendingFetched = false
+    @State private var highlyRatedFetched = false
+    @State private var budgetFetched = false
+    
     
     // Navigation Purposes, no need for Home_Screen variable
     @State private var toList_Screen = false
@@ -127,9 +132,19 @@ public struct Home_Screen: View {
                                     }
                                 }
                             }
+                           /* .onAppear {
+                                if let location = locationManager.userLocation, !hasFetchedTrending {
+                                    hasFetchedTrending  = true
+                                    isLoadingTrending = true
+                                    HomeViewModel.fetchTrendingRestaurants(latitude: location.latitude, longitude: location.longitude) { restos in
+                                        trendingRestaurants = restos
+                                        isLoadingTrending = false
+                                    }
+                                }
+                            } */
                             .onChange(of: locationManager.userLocation?.latitude) { _ in
-                                if let location = locationManager.userLocation {
-                                    print("Got user location: \(location.latitude), \(location.longitude)")
+                                if let location = locationManager.userLocation, !trendingFetched {
+                                    trendingFetched = true
                                     isLoadingTrending = true
                                     HomeViewModel.fetchTrendingRestaurants(latitude: location.latitude, longitude: location.longitude) { restos in
                                         trendingRestaurants = restos
@@ -178,8 +193,19 @@ public struct Home_Screen: View {
                                     }
                                 }
                             }
+                            /* .onAppear {
+                                if let location = locationManager.userLocation, !hasFetchedRated {
+                                    hasFetchedRated = true
+                                    isLoadingHighlyRated = true
+                                    HomeViewModel.fetchHighlyRatedRestaurants(latitude: location.latitude, longitude: location.longitude) { restos in
+                                        highlyRatedRestaurants = restos
+                                        isLoadingHighlyRated = false
+                                    }
+                                }
+                            } */
                             .onChange(of: locationManager.userLocation?.latitude) { _ in
-                                if let location = locationManager.userLocation {
+                                if let location = locationManager.userLocation, !highlyRatedFetched {
+                                    highlyRatedFetched = true
                                     isLoadingHighlyRated = true
                                     HomeViewModel.fetchHighlyRatedRestaurants(latitude: location.latitude, longitude: location.longitude) { restos in
                                         highlyRatedRestaurants = restos
@@ -187,6 +213,7 @@ public struct Home_Screen: View {
                                     }
                                 }
                             }
+
                             
                             // On a budget restaurants
                             VStack(alignment: .leading) {
@@ -228,8 +255,9 @@ public struct Home_Screen: View {
                                     }
                                 }
                             }
-                            .onChange(of: locationManager.userLocation?.latitude) { _ in
-                                if let location = locationManager.userLocation {
+                            .onAppear {
+                                if let location = locationManager.userLocation, !budgetFetched {
+                                    budgetFetched = true
                                     isLoadingBudget = true
                                     HomeViewModel.fetchBudgetRestaurants(latitude: location.latitude, longitude: location.longitude) { restos in
                                         budgetRestaurants = restos
@@ -237,6 +265,8 @@ public struct Home_Screen: View {
                                     }
                                 }
                             }
+                           
+
                             
                             // Today’s Pick Section
                             VStack(alignment: .leading) {

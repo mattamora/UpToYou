@@ -10,7 +10,7 @@ import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
 import CoreLocation
-
+import UIKit
 
 // main app color, theme color (red)
 extension Color {
@@ -108,9 +108,19 @@ struct HomeItemModel: Codable {
 }
 
 
+// a list in List_Screen
+struct CustomList: Identifiable, Codable {
+    @DocumentID var id: String?
+    var name: String // List name, e.g., "Date Night Spots"
+    var restaurantIDs: [String]? // IDs of restaurants in the list
+    var createdDate: Date // for sorting
+   // var imageURL: String? // uploaded image
+}
 
 
-// for food type options for the filter in Shuffle_Screen
+
+
+// for food type options for the filter in Shuffle_Screen (LOWKEY USELSS NOW)
 enum FoodType: String, CaseIterable, Identifiable {
     
     // for the view, Ui only
@@ -139,52 +149,60 @@ enum FoodType: String, CaseIterable, Identifiable {
     }
 }
 
+// which version of Restaurant_Search shows up, either for Favorites_Screen or CreateNewList
+enum RestaurantSearchMode {
+    case favorites
+    case listAdd
+}
 
 
+// for picking a photo from the users library, used in List_Screen, CreateNewList
+struct ImagePicker: UIViewControllerRepresentable {
+    @Binding var image: UIImage?
+    
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.delegate = context.coordinator
+        picker.sourceType = .photoLibrary
+        return picker
+    }
+    
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
 
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
+        let parent: ImagePicker
 
-// simpler way to do naviagtion between views, should replace bottom icons
-/*
- Other, simpler way to do the bottom navigation
- found this out after already having implemented the bottom navigation HStack
- 
- TabView {
-     Home_Screen()
-         .tabItem {
-             Label("Home", systemImage: "house")
-         }
-     List_Screen()
-         .tabItem {
-             Label("List", systemImage: "list.bullet.circle.fill")
-         }
-     Shuffle_Screen()
-         .tabItem {
-             Label("Shuffle", systemImage: "arrow.trianglehead.2.clockwise")
-         }
-     Favorites_Screen()
-         .tabItem {
-             Label("Favorites", systemImage: "heart")
-         }
-     Profile_Screen()
-         .tabItem {
-             Label("Profile", systemImage: "person")
-         }
- }
- */
-
-// maakes struct User info into a dictionary, used to simplify storing user data into firebase, .setData( used for this ), does not work well so currently not using this. Supposed to be used in Login_SignUp file in create_account() funtion
-/* extension Encodable {
-    func asDictionary() -> [String: Any] {
-        guard let userData = try? JSONEncoder().encode(self) else {
-            return [:]  // returns an empty dictionary if no data is given
+        init(_ parent: ImagePicker) {
+            self.parent = parent
         }
-        
-        do {
-            let json = try JSONSerialization.jsonObject(with: userData) as? [String: Any]
-            return json ?? [:]
-        } catch {
-            return [:] // returns an empty dictionary if error is found
+
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+            if let uiImage = info[.originalImage] as? UIImage {
+                parent.image = uiImage
+            }
+
+            picker.dismiss(animated: true)
+        }
+
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            picker.dismiss(animated: true)
         }
     }
 }
-*/
+
+
+
+
+// helper class to decode from a dictionary into  FavoriteItemModel
+class DictionaryDecoder {
+    private let jsonDecoder = JSONDecoder()
+
+    func decode<T>(_ type: T.Type, from dictionary: [String: Any]) throws -> T where T: Decodable {
+        let data = try JSONSerialization.data(withJSONObject: dictionary, options: [])
+        return try jsonDecoder.decode(T.self, from: data)
+    }
+}

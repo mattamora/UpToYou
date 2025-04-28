@@ -11,8 +11,9 @@ import CoreLocation
 
 struct Home_Item: View {
     
-    @StateObject private var locationManager = LocationManager() // get user's location
-
+    //@StateObject private var locationManager = LocationManager() // get user's location
+    @ObservedObject private var locationManager = LocationManager.shared
+    
     // Calculate distance from user to restaurant
     private var distanceText: String {
         guard let userLocation = locationManager.userLocation else {

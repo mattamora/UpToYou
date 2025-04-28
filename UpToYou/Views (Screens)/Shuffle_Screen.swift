@@ -102,9 +102,9 @@ struct Shuffle_Screen: View {
                     } label: {
                         HStack {
                             Image(systemName: "arrow.trianglehead.clockwise")
-                                .font(.system(size: 34))
-                            Text("Shuffle")
-                                .font(.system(size: 34))
+                                .font(.system(size: 24))
+                            Text("Shuffle Favorites")
+                                .font(.system(size: 24))
                         }
                         .padding()
                         .frame(width: 300)

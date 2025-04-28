@@ -10,13 +10,36 @@ import SwiftUI
 import MapKit
 
 struct Restaurant_Search: View {
+   
+    var mode: RestaurantSearchMode = .favorites // Default is favorites
+        
     @StateObject var searchViewModel = RestaurantSearchViewModel()
     
     // for handling location, viewing current location
-    @StateObject private var locationManager = LocationManager()
-    
+    //@StateObject private var locationManager = LocationManager()
+    @ObservedObject private var locationManager = LocationManager.shared
+
     @Binding var showSearchSheet: Bool
     @Binding var searchText: String  // the text typed in the search bar
+
+    // For listAdd mode – track selected restaurants locally
+    @State private var selectedRestaurantIDs: Set<String> = []
+    @State private var selectedRestaurants: [Restaurant] = []
+    
+    var existingSelectedRestaurantIDs: Set<String> = []
+
+    // Add this optional callback to pass selected restaurants back
+    var onRestaurantsSelected: (([Restaurant]) -> Void)? = nil
+    
+    func toggleRestaurantSelection(_ restaurant: Restaurant) {
+        if selectedRestaurantIDs.contains(restaurant.id) {
+            selectedRestaurantIDs.remove(restaurant.id)
+            selectedRestaurants.removeAll { $0.id == restaurant.id }
+        } else {
+            selectedRestaurantIDs.insert(restaurant.id)
+            selectedRestaurants.append(restaurant)
+        }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -32,6 +55,7 @@ struct Restaurant_Search: View {
                 }
 
                 Spacer()
+                
             }
             .padding(.top, 30)
 
@@ -64,7 +88,13 @@ struct Restaurant_Search: View {
                 ScrollView {
                     VStack(spacing: 12) {
                         ForEach(searchViewModel.results, id: \.id) { r in
-                            SearchResultItem(searchViewModel: searchViewModel, restaurant: r)
+                            SearchResultItem(
+                                searchViewModel: searchViewModel,
+                                restaurant: r,
+                                mode: mode,
+                                selectedRestaurantIDs: $selectedRestaurantIDs,
+                                toggleSelection: toggleRestaurantSelection
+                            )
                         }
                     }
                     .padding(.top)
@@ -86,6 +116,12 @@ struct Restaurant_Search: View {
         }
         .onAppear {
             searchViewModel.loadFavorites()
+            selectedRestaurantIDs = existingSelectedRestaurantIDs
+        }
+        .onDisappear {
+            if mode == .listAdd {
+                onRestaurantsSelected?(selectedRestaurants)
+            }
         }
     } // end of body view
 }
@@ -96,7 +132,11 @@ struct Restaurant_Search: View {
 struct SearchResultItem: View {
     @ObservedObject var searchViewModel: RestaurantSearchViewModel
     let restaurant: Restaurant
-
+    let mode: RestaurantSearchMode
+    
+    @Binding var selectedRestaurantIDs: Set<String> // for listAdd
+    var toggleSelection: (Restaurant) -> Void       // function to toggle selection
+    
     var body: some View {
         HStack {
             // Image
@@ -130,27 +170,34 @@ struct SearchResultItem: View {
 
             Spacer()
 
-            // Heart Icon, filled if the restaraunt is favorited
-            Image(systemName: searchViewModel.favoriteIDs.contains(restaurant.id) ? "heart.fill" : "heart")
-                .font(.system(size: 30))
-                .foregroundColor(searchViewModel.favoriteIDs.contains(restaurant.id) ? .themeColor : .white)
-                .onTapGesture {
-                    if !searchViewModel.favoriteIDs.contains(restaurant.id) {
-                        withAnimation{
-                            searchViewModel.addToFavorites(restaurant: restaurant)
+            // Icon Logic Based on Mode
+            if mode == .favorites {
+                Image(systemName: searchViewModel.favoriteIDs.contains(restaurant.id) ? "heart.fill" : "heart")
+                    .font(.system(size: 30))
+                    .foregroundColor(searchViewModel.favoriteIDs.contains(restaurant.id) ? .themeColor : .white)
+                    .onTapGesture {
+                        if !searchViewModel.favoriteIDs.contains(restaurant.id) {
+                            withAnimation {
+                                searchViewModel.addToFavorites(restaurant: restaurant)
+                            }
                         }
-                        
                     }
-                }
-
+            } else if mode == .listAdd {
+                Image(systemName: selectedRestaurantIDs.contains(restaurant.id) ? "plus.circle.fill" : "plus.circle")
+                    .font(.system(size: 30))
+                    .foregroundColor(.themeColor)
+                    .onTapGesture {
+                        toggleSelection(restaurant)
+                    }
+            }
         }
         .frame(maxWidth: .infinity)
         .padding([.top, .bottom], 15)
         .background(Color.mainColor)
         .cornerRadius(12)
-      
     }
 }
+
 
 
 

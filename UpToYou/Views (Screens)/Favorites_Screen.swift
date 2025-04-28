@@ -201,7 +201,11 @@ struct Favorites_Screen: View {
             } // end of ZStack
             .fullScreenCover(isPresented: $showSearchSheet) {
                 // shows Restaurant_Search view when top right button is clicked
-                Restaurant_Search(showSearchSheet: $showSearchSheet, searchText: $searchRestaurants)
+                Restaurant_Search(
+                    mode: .favorites,
+                    showSearchSheet: $showSearchSheet,
+                    searchText: $searchRestaurants
+                )
             }
         } // end of Navigation Stack
     } // end of body view

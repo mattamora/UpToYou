@@ -6,13 +6,21 @@
 //
 
 import SwiftUI
+import FirebaseFirestore
+import FirebaseAuth
 
 struct List_Screen: View {
     
     @StateObject var ListViewModel = ListScreenViewModel()
+    @State private var showCreateListSheet = false
+    
+    @State private var selectedList: CustomList? = nil
+    @State private var showListSheet = false
+    
     
     // for handling location
-    @StateObject private var locationManager = LocationManager()
+    //@StateObject private var locationManager = LocationManager()
+    @ObservedObject private var locationManager = LocationManager.shared
     
     // Navigation Purposes, no need for List_Screen
     @State private var toHome_Screen = false
@@ -20,101 +28,120 @@ struct List_Screen: View {
     @State private var toShuffle_Screen = false
     @State private var toFavorites_Screen = false
     
-    // for the distance filter selection
-    @State private var showDistanceSheet = false
-    @State private var selectedDistance = 5
-    let distanceOptions = [5, 10, 15, 20, 25]
-    
-    // for type of food filter
-    @State private var showFoodSheet = false
-    @State private var selectedFoodType: FoodType = .any // enum in Structs&Extensions
+    // for swipe to delete a list
+    private func deleteList(_ list: CustomList) {
+        guard let userID = Auth.auth().currentUser?.uid, let listID = list.id else { return }
 
+        Firestore.firestore()
+            .collection("Users").document(userID)
+            .collection("Lists").document(listID)
+            .delete() { error in
+                if let error = error {
+                    print("Error deleting list: \(error.localizedDescription)")
+                } else {
+                    print("List deleted successfully.")
+                    if let index = ListViewModel.userLists.firstIndex(where: { $0.id == list.id }) {
+                        ListViewModel.userLists.remove(at: index)
+                    }
+                }
+            }
+    }
     
     var body: some View {
+
         NavigationStack {
             ZStack {
                 Color.mainColor.ignoresSafeArea()
                 
                 VStack {
-                    // filter buttons
-                    HStack {
-                        Button {
-                            showDistanceSheet = true
-                        } label: {
-                            HStack (spacing: 5) {
-                                Image(systemName: "location")
-                                Text("Within: \(selectedDistance) miles")
-                            }
-                            .padding(.vertical, 10)
-                            .padding(.horizontal, 16)
-                            .foregroundColor(Color.gray)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .stroke(Color.gray, lineWidth: 1)
-                            )
-                            
-                        }
-                        
-                        Button {
-                            showFoodSheet = true
-                        } label : {
-                            HStack (spacing: 5) {
-                                Image(systemName: "fork.knife")
-                                Text("Food Type: \(selectedFoodType.rawValue)")
-                            }
-                            .padding(.vertical, 10)
-                            .padding(.horizontal, 16)
-                            .foregroundColor(Color.gray)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .stroke(Color.gray, lineWidth: 1)
-                            )
-                            
-                        }
-                    }
                     
-                    // uses Yelp API to fetch restaurants, in order of distance
-                    Button {
-                        if let location = locationManager.userLocation {
-                            ListViewModel.fetchYelpRestaurants(
-                                latitude: location.latitude,
-                                longitude: location.longitude,
-                                distanceInMiles: selectedDistance,
-                                foodType: selectedFoodType
-                            )
+                    // Lists, top of the screen, locked to top
+                    VStack(spacing: 15) {
+                        HStack {
+                            Text("Lists")
+                                .foregroundColor(.gray)
+                                .font(.system(size: 40))
+                                .fontWeight(.bold)
+                                .offset(x: 30)
+                            Spacer()
+                            Button {
+                                showCreateListSheet = true
+                            } label: {
+                                Image(systemName: "text.badge.plus")
+                                    .resizable()
+                                    .frame(width: 33, height: 33)
+                                    .foregroundStyle(.gray)
+                            }
+                            .offset(x: -30)
+                            
                         }
-                    } label: {
-                        Text("Fetch Nearby Restaurants")
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                            .padding()
+                       
+                        Divider()
+                            .frame(height: 2)
+                            .background(Color.gray)
                     }
-                    .disabled(locationManager.userLocation == nil)
-
-                    // loading or empty text
-                    if ListViewModel.isLoading {
-                        ProgressView("Loading...")
-                    } else if ListViewModel.restaurants.isEmpty {
-                        Text("No Restaurants Nearby!")
+                    .padding(.top, 10)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.mainColor)
+                    .zIndex(1)
+                    
+                    
+                    if ListViewModel.userLists.isEmpty {
+                        Text("Add a List!")
+                            .font(.title)
                             .foregroundColor(.gray)
-                            .padding()
+                            .padding(.top, 50)
                     } else {
+                        /*
+                        ScrollView {
+                            VStack(spacing: 12) {
+                                ForEach(ListViewModel.userLists) { list in
+                                    ListItem(list: list, onChevronTap: {
+                                        print("Tapped on list: \(list.name)") // DEBUG
+                                        selectedList = list
+                                        showListSheet = true
+                                    })
+                                    .padding(.horizontal)
+                                    Divider()
+                                        .frame(height: 0.5)
+                                        .background(Color.gray)
+                                }
+                            }
+                        } */
                         
-                        List(ListViewModel.restaurants, id: \.url) { resto in
-                            let itemModel = ListViewModel.convertToFavoriteModel(resto)
-
-                            Favorite_Item(item: itemModel)
-                                .listRowInsets(EdgeInsets()) // Removes default List padding
-                                .frame(maxWidth: .infinity)
-                                .listRowSeparatorTint(.white, edges: .bottom)
+                        // with swipe to delete
+                        List {
+                            ForEach(ListViewModel.userLists) { list in
+                                ListItem(list: list, onChevronTap: {
+                                    print("Tapped on list: \(list.name)") // DEBUG
+                                    selectedList = list
+                                    showListSheet = true
+                                })
+                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                    Button(role: .destructive) {
+                                        deleteList(list)
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                }
+                                .listRowInsets(EdgeInsets())
+                                .background(Color.mainColor)
+                                
+                                Divider()
+                                    .frame(height: 0.5)
+                                    .background(Color.gray)
+                            }
+                           
                         }
                         .scrollContentBackground(.hidden)
-                        .frame(maxHeight: .infinity)
+                        .listStyle(PlainListStyle())
 
                     }
+
+                   
+                    
+                    
+             
                     
                     // bottom icons, navigation
                     Spacer()
@@ -191,79 +218,19 @@ struct List_Screen: View {
                     }
                     
                 } // end of VStack
-                .sheet(isPresented: $showDistanceSheet) {
-                    VStack(spacing: 16) {
-                        Text("Choose Distance Limit")
-                            .font(.system(size: 35))
-                            .foregroundStyle(.gray)
-                            .bold()
-
-                        Picker("Distance", selection: $selectedDistance) {
-                            ForEach(distanceOptions, id: \.self) { miles in
-                                Text("\(miles) miles").tag(miles)
-                                    .font(.system(size: 30))
-                                    .foregroundStyle(.gray)
-                            }
-                        }
-                        .labelsHidden()
-                        .pickerStyle(.wheel)
-                        .frame(height: 200)
-
-                        Button {
-                            showDistanceSheet = false
-                        } label : {
-                            Text("Done")
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.red)
-                                .foregroundColor(.white)
-                                .cornerRadius(12)
-                                .offset(y: 30)
-                        }
-                     
-                    }
-                    .padding(.horizontal)
-                    .frame(maxHeight: .infinity) // Let it expand
-                    .background(Color.mainColor) // Set the background color
-                    .presentationDetents([.fraction(0.6)]) // Limit sheet height to 50%
-                }
-                .sheet(isPresented: $showFoodSheet) {
-                    VStack(spacing: 16) {
-                        Text("Choose Food Type")
-                            .font(.system(size: 35))
-                            .foregroundStyle(.gray)
-                            .bold()
-
-                        Picker("Distance", selection: $selectedFoodType) {
-                            ForEach(FoodType.allCases) { food in
-                                Text(food.rawValue).tag(food)
-                                    .font(.system(size: 30))
-                                    .foregroundStyle(.gray)
-                            }
-                        }
-                        .labelsHidden()
-                        .pickerStyle(.wheel)
-                        .frame(height: 200)
-
-                        Button {
-                            showFoodSheet = false
-                        } label : {
-                            Text("Done")
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.red)
-                                .foregroundColor(.white)
-                                .cornerRadius(12)
-                                .offset(y: 30)
-                        }
-                     
-                    }
-                    .padding(.horizontal)
-                    .frame(maxHeight: .infinity) // Let it expand
-                    .background(Color.mainColor) // Set the background color
-                    .presentationDetents([.fraction(0.6)]) // Limit sheet height to 50%
+                .onAppear {
+                    ListViewModel.fetchUserLists()
                 }
             } // end of ZStack
+            .fullScreenCover(isPresented: $showCreateListSheet, onDismiss: {
+                ListViewModel.fetchUserLists() // Refresh lists after closing sheet
+            }) {
+                // shows CreateNewList view when top right button is clicked
+                CreateListSheetView()
+            }
+            .fullScreenCover(item: $selectedList) { list in
+                ListSheetView(ListSheetViewModel: ListSheetViewModel(list: list))
+            }
         } // end of Navigation Stack
     } // end of body view
 } // end of Profile view
@@ -271,3 +238,42 @@ struct List_Screen: View {
 #Preview {
     List_Screen()
 }
+
+
+// list item view
+struct ListItem: View {
+    let list: CustomList
+    var onChevronTap: () -> Void // Callback when chevron is tapped
+    
+    var body: some View {
+        HStack {
+            // Placeholder for now
+            Image("WhiteLogo")
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: 90, height: 90)
+                .cornerRadius(10)
+
+            VStack(alignment: .leading) {
+                Text(list.name)
+                    .bold()
+                    .font(.system(size: 25))
+                    .foregroundColor(.white)
+            }
+
+            Spacer()
+
+            Button {
+                onChevronTap()
+            } label: {
+                Image(systemName: "chevron.up")
+                    .font(.system(size: 20))
+                    .foregroundColor(.gray)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .background(Color.mainColor)
+        .cornerRadius(12)
+    }
+}
+
