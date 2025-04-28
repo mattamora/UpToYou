@@ -127,9 +127,6 @@ struct List_Screen: View {
                                 .listRowInsets(EdgeInsets())
                                 .background(Color.mainColor)
                                 
-                                Divider()
-                                    .frame(height: 0.5)
-                                    .background(Color.gray)
                             }
                            
                         }
@@ -247,12 +244,24 @@ struct ListItem: View {
     
     var body: some View {
         HStack {
-            // Placeholder for now
-            Image("WhiteLogo")
-                .resizable()
-                .aspectRatio(contentMode: .fill)
+            if let imageURL = list.imageURL, let url = URL(string: imageURL) {
+                AsyncImage(url: url) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    ProgressView()
+                }
                 .frame(width: 90, height: 90)
                 .cornerRadius(10)
+            } else {
+                Image("WhiteLogo")
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 90, height: 90)
+                    .cornerRadius(10)
+            }
+
 
             VStack(alignment: .leading) {
                 Text(list.name)
@@ -269,6 +278,7 @@ struct ListItem: View {
                 Image(systemName: "chevron.up")
                     .font(.system(size: 20))
                     .foregroundColor(.gray)
+                    .padding(.trailing, 10)
             }
         }
         .frame(maxWidth: .infinity)

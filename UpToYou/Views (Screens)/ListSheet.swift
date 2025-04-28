@@ -40,14 +40,30 @@ struct ListSheetView: View {
             }
             .padding(.top, 30)
 
-            Image("WhiteLogo")
-                .resizable()
-                .aspectRatio(contentMode: .fill)
+            if let imageURL = ListSheetViewModel.list.imageURL, let url = URL(string: imageURL) {
+                AsyncImage(url: url) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    ProgressView()
+                }
                 .frame(width: 280, height: 280)
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
                         .stroke(Color.white, lineWidth: 1)
                 )
+            } else {
+                Image("WhiteLogo")
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 280, height: 280)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(Color.white, lineWidth: 1)
+                    )
+            }
+
 
             // Dynamic List Name
             Text(ListSheetViewModel.list.name)

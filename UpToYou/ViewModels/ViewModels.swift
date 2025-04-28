@@ -9,6 +9,7 @@
 import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
+import FirebaseStorage
 import CoreLocation
 import UIKit
 
@@ -740,6 +741,7 @@ class CreateListViewModel: ObservableObject {
     @Published var showRestaurantSearchSheet: Bool = false
     @Published var showErrorAlert: Bool = false
     
+    /* not needed anymore
     func saveListToFirebase() {
         guard let userID = Auth.auth().currentUser?.uid else {
             print("No user logged in")
@@ -786,10 +788,83 @@ class CreateListViewModel: ObservableObject {
                     print("List saved successfully")
                 }
             }
-    }
-
-
+    } */
     
+    // has image saving
+    func saveListToFirebase() {
+        guard let userID = Auth.auth().currentUser?.uid else {
+            print("No user logged in")
+            return
+        }
+
+        let restaurantDataArray: [[String: Any]] = selectedRestaurants.map { restaurant in
+            return [
+                "id": restaurant.id,
+                "name": restaurant.name,
+                "image_url": restaurant.image_url ?? "",
+                "rating": restaurant.rating,
+                "location": [
+                    "address1": restaurant.location.address1 ?? "",
+                    "city": restaurant.location.city,
+                    "state": restaurant.location.state
+                ],
+                "coordinates": [
+                    "latitude": restaurant.coordinates.latitude,
+                    "longitude": restaurant.coordinates.longitude
+                ]
+            ]
+        }
+
+        let createdDate = Date()
+
+        var data: [String: Any] = [
+            "name": listTitle,
+            "createdDate": Timestamp(date: createdDate),
+            "restaurants": restaurantDataArray
+        ]
+
+        let firestore = Firestore.firestore()
+        let listRef = firestore.collection("Users").document(userID).collection("Lists").document()
+
+        listRef.setData(data) { error in
+            if let error = error {
+                print("Error saving list: \(error.localizedDescription)")
+            } else {
+                print("List saved successfully.")
+                // Upload image if selected
+                if let image = self.selectedImage {
+                    self.uploadImage(image, for: listRef.documentID, userID: userID)
+                }
+            }
+        }
+    }
+    
+    private func uploadImage(_ image: UIImage, for listID: String, userID: String) {
+        let storageRef = Storage.storage().reference().child("Users").child(userID).child("ListImages").child("\(listID).jpg")
+
+        guard let imageData = image.jpegData(compressionQuality: 0.8) else { return }
+
+        storageRef.putData(imageData, metadata: nil) { metadata, error in
+            if let error = error {
+                print("Image upload error: \(error.localizedDescription)")
+                return
+            }
+
+            storageRef.downloadURL { url, error in
+                if let url = url {
+                    Firestore.firestore().collection("Users").document(userID).collection("Lists").document(listID).updateData([
+                        "imageURL": url.absoluteString
+                    ]) { error in
+                        if let error = error {
+                            print("Error saving image URL: \(error.localizedDescription)")
+                        } else {
+                            print("Image URL saved successfully.")
+                        }
+                    }
+                }
+            }
+        }
+    }
     
 }
 
@@ -863,10 +938,82 @@ class ListSheetViewModel: ObservableObject {
 
 class ShuffleScreenViewModel: ObservableObject {
     init() {}
-    
-    @Published var shuffledRestaurant: FavoriteItemModel? = nil
 
+    @Published var shuffledRestaurant: FavoriteItemModel? = nil
+    @Published var shufflePool: [FavoriteItemModel] = []
+
+    // Update pool depending on source: Favorites or List
+    func updateShufflePool(from source: String, lists: [CustomList], favorites: [FavoriteItemModel], completion: @escaping () -> Void) {
+        if source == "Favorites" {
+            shufflePool = favorites
+            completion()
+        } else if let selectedList = lists.first(where: { $0.name == source }) {
+            fetchRestaurantsForList(selectedList) { fetchedItems in
+                self.shufflePool = fetchedItems
+                completion()
+            }
+        } else {
+            shufflePool = []
+            completion()
+        }
+    }
+
+    // Fetch restaurants stored in Firestore for the selected list
+    private func fetchRestaurantsForList(_ list: CustomList, completion: @escaping ([FavoriteItemModel]) -> Void) {
+        guard let userID = Auth.auth().currentUser?.uid, let listID = list.id else {
+            completion([])
+            return
+        }
+
+        let db = Firestore.firestore()
+        db.collection("Users").document(userID).collection("Lists").document(listID)
+            .getDocument { snapshot, error in
+                if let data = snapshot?.data(), let restaurantsArray = data["restaurants"] as? [[String: Any]] {
+                    var items: [FavoriteItemModel] = []
+                    for restaurantData in restaurantsArray {
+                        if let item = self.mapRestaurantDataToFavoriteItem(data: restaurantData) {
+                            items.append(item)
+                        }
+                    }
+                    DispatchQueue.main.async {
+                        completion(items)
+                    }
+                } else {
+                    print("Error fetching restaurants for list: \(error?.localizedDescription ?? "unknown error")")
+                    completion([])
+                }
+            }
+    }
+
+    // Helper to map each dictionary into a FavoriteItemModel
+    private func mapRestaurantDataToFavoriteItem(data: [String: Any]) -> FavoriteItemModel? {
+        guard let id = data["id"] as? String,
+              let name = data["name"] as? String,
+              let picture = data["image_url"] as? String,
+              let rating = data["rating"] as? Double,
+              let locationDict = data["location"] as? [String: Any],
+              let city = locationDict["city"] as? String,
+              let state = locationDict["state"] as? String,
+              let coordinatesDict = data["coordinates"] as? [String: Any],
+              let latitude = coordinatesDict["latitude"] as? Double,
+              let longitude = coordinatesDict["longitude"] as? Double else {
+            return nil
+        }
+
+        let locationString = "\(city), \(state)"
+
+        return FavoriteItemModel(
+            ID: id,
+            restoName: name,
+            location: locationString,
+            picture: picture,
+            rating: rating,
+            latitude: latitude,
+            longitude: longitude
+        )
+    }
 }
+
 
 
 
@@ -903,7 +1050,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var permissionDenied: Bool = false
     @Published var cityAndState: String? = nil  // "city, state", for Profile_Screen
 
-    // 🔒 Make init private so no one else creates new instances
+    //  Make init private so no one else creates new instances
     private override init() {
         super.init()
         manager.delegate = self

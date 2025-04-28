@@ -114,7 +114,7 @@ struct CustomList: Identifiable, Codable {
     var name: String // List name, e.g., "Date Night Spots"
     var restaurantIDs: [String]? // IDs of restaurants in the list
     var createdDate: Date // for sorting
-   // var imageURL: String? // uploaded image
+    var imageURL: String? // uploaded image
 }
 
 

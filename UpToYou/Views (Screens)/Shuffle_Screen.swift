@@ -14,6 +14,7 @@ import FirebaseAuth
 struct Shuffle_Screen: View {
     
     @StateObject private var ShuffleViewModel = ShuffleScreenViewModel()
+    @StateObject var List_ScreenViewModel = ListScreenViewModel()
     
     // Navigation Purposes, no need for Shuffle_Screen
     @State private var toHome_Screen = false
@@ -30,21 +31,19 @@ struct Shuffle_Screen: View {
         self._faveItems = FirestoreQuery(collectionPath: "Users/\(Auth.auth().currentUser?.uid ?? "no-user")/Favorite Restaurants")
     }
     
+    
+    @State private var showShuffleSourceSheet = false
+    @State private var selectedShuffleSource: String = "Favorites" // Default
+    
     // variable for the selected random restaurant
     @State private var randomRestaurant: FavoriteItemModel? = nil
     
-    
-    
+   
     // Animation variables
     @State private var rollingName: String = "" // the random restuarant names shuffled
     @State private var isRolling: Bool = false // if the names are still shuffling or not (visually)
     @State private var scale: CGFloat = 1.0
     @State private var offsetX: CGFloat = 300 // Start off-screen for slide in
-
-
-                    
-
-    
 
 
     
@@ -54,11 +53,29 @@ struct Shuffle_Screen: View {
                 Color.mainColor.ignoresSafeArea()
                 
                 VStack(spacing: 30) {
-                    Text("Shuffle")
+                    Text("Up To You")
                         .foregroundColor(.gray)
                         .font(.system(size: 40))
                         .fontWeight(.bold)
                         .padding(.top, 10)
+                    
+                    // filter for the shuffle
+                    Button {
+                        showShuffleSourceSheet = true
+                    } label : {
+                        HStack (spacing: 5) {
+                            Image(systemName: "line.3.horizontal.decrease.circle")
+                            Text("Shuffle From: \(selectedShuffleSource)")
+                        }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 16)
+                        .foregroundColor(Color.gray)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(Color.gray, lineWidth: 1)
+                        )
+                    }
+
                     
                     // shuffle button with an animation, bounce, roulette, slide-in
                     Button {
@@ -71,39 +88,45 @@ struct Shuffle_Screen: View {
                                 scale = 1.0
                             }
                         }
-                        
+
                         // Start Slot Machine Rolling
                         isRolling = true
                         rollingName = ""
                         offsetX = 300 // Reset for slide
-                        
-                        var rollCount = 0
-                        let maxRolls = 40 // time length of roll
-                        let rollInterval = 0.05 // how long each restaurant name shows up for
+                        randomRestaurant = nil // Clear previous selection
 
-                        Timer.scheduledTimer(withTimeInterval: rollInterval, repeats: true) { timer in
-                            rollCount += 1
-                            if rollCount >= maxRolls {
-                                timer.invalidate()
-                                if let random = faveItems.randomElement() {
-                                    randomRestaurant = random
-                                }
-                                isRolling = false
+                        // Update shufflePool depending on selected source (Favorites or List)
+                        ShuffleViewModel.updateShufflePool(from: selectedShuffleSource, lists: List_ScreenViewModel.userLists, favorites: faveItems) {
 
-                                // Slide in after slot ends
-                                withAnimation(.easeOut(duration: 0.3)) {
-                                    offsetX = 0
+                            var rollCount = 0
+                            let maxRolls = 40 // time length of roll
+                            let rollInterval = 0.05 // how long each restaurant name shows up for
+
+                            Timer.scheduledTimer(withTimeInterval: rollInterval, repeats: true) { timer in
+                                rollCount += 1
+                                if rollCount >= maxRolls {
+                                    timer.invalidate()
+                                    if let random = ShuffleViewModel.shufflePool.randomElement() {
+                                        randomRestaurant = random
+                                    }
+                                    isRolling = false
+
+                                    // Slide in after slot ends
+                                    withAnimation(.easeOut(duration: 0.3)) {
+                                        offsetX = 0
+                                    }
+                                } else {
+                                    rollingName = ShuffleViewModel.shufflePool.randomElement()?.restoName ?? ""
                                 }
-                            } else {
-                                rollingName = faveItems.randomElement()?.restoName ?? ""
                             }
-                        }
+
+                        } // end of updateShufflePool completion
 
                     } label: {
                         HStack {
                             Image(systemName: "arrow.trianglehead.clockwise")
                                 .font(.system(size: 24))
-                            Text("Shuffle Favorites")
+                            Text("Shuffle ")
                                 .font(.system(size: 24))
                         }
                         .padding()
@@ -227,9 +250,56 @@ struct Shuffle_Screen: View {
                     }
                     
                 } // end of VStack
+                .sheet(isPresented: $showShuffleSourceSheet) {
+                    VStack(spacing: 16) {
+                        Text("Choose Shuffle Source")
+                            .font(.system(size: 27))
+                            .foregroundStyle(.gray)
+                            .bold()
+                        
+                        Picker("Shuffle From", selection: $selectedShuffleSource) {
+                            Text("Favorites").tag("Favorites")
+                                .foregroundStyle(.gray)
+                            ForEach(List_ScreenViewModel.userLists, id: \.id) { list in
+                                Text(list.name).tag(list.name)
+                                    .foregroundStyle(.gray)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.wheel)
+                        .frame(height: 200)
+
+                        Button {
+                            showShuffleSourceSheet = false
+                        } label : {
+                            Text("Done")
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .foregroundColor(.gray)
+                                .overlay(
+                                   RoundedRectangle(cornerRadius: 12)
+                                       .stroke(style: StrokeStyle(lineWidth: 2))
+                                       .foregroundColor(Color.gray)
+                                )
+                                .offset(y: 30)
+                        }
+                        
+                    }
+                    .padding(.horizontal)
+                    .frame(maxHeight: .infinity)
+                    .background(Color.mainColor)
+                    .presentationDetents([.fraction(0.5)])
+                }
+                .onAppear {
+                    print("Fetched Lists: \(List_ScreenViewModel.userLists.map { $0.name })")
+                    List_ScreenViewModel.fetchUserLists()
+                }
+
+
             } // end of ZStack
         } // end of Navigation Stack
     } // end of body view
+    
 } // end of Profile view
 
 
