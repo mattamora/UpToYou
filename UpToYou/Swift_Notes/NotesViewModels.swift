@@ -205,6 +205,7 @@ struct Data: Codable {
 
 // uses import Foundation
 // to turn struct data into dictionary data for .setData()
+/*
 struct DictionaryEncoder {
     private let jsonEncoder = JSONEncoder()
 
@@ -217,7 +218,7 @@ struct DictionaryEncoder {
         return dictionary
     }
 }
-
+*/
 
 
 // Helper function to format timestamps, dates, Date().timeIntervalSince1970 to format for readability

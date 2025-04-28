@@ -6,29 +6,11 @@
 //
 
 import SwiftUI
-import CoreLocation
-
 
 struct Home_Item: View {
     
-    //@StateObject private var locationManager = LocationManager() // get user's location
-    @ObservedObject private var locationManager = LocationManager.shared
-    
-    // Calculate distance from user to restaurant
-    private var distanceText: String {
-        guard let userLocation = locationManager.userLocation else {
-            return "Locating..."
-        }
-
-        let restaurantLocation = CLLocation(latitude: item.latitude, longitude: item.longitude)
-        let userCLLocation = CLLocation(latitude: userLocation.latitude, longitude: userLocation.longitude)
-
-        let distanceInMeters = userCLLocation.distance(from: restaurantLocation)
-        let distanceInMiles = distanceInMeters / 1609.34
-
-        return String(format: "%.1f miles", distanceInMiles)
-    }
-
+    // shows Home_Save
+    @State private var showSaveSheet = false
     
     // uses/creates the struct of HomeItemModel
     let item: HomeItemModel
@@ -37,66 +19,63 @@ struct Home_Item: View {
         ZStack {
             VStack (spacing: 4) {
                 
-                //  load an image from a URL over the internet
-                // URL(string: ...) converts that string into a proper URL object, what AsyncImage needs to make the web request, If this string is invalid (like not a real URL), AsyncImage just shows nothing
+                // Load restaurant image
                 AsyncImage(url: URL(string: item.picture)) { image in
                     image
                         .resizable()
-                        .scaledToFill() // fills frame, crops if needed
+                        .scaledToFill()
                 } placeholder: {
-                    // shows while the image is still loading
-                    // spinning loading circle (standard iOS style)
-                    // goes away automatically when the image finishes loading
                     ProgressView()
                 }
                 .frame(width: 260, height: 160)
                 .cornerRadius(10)
-                .clipped() // ensures cropped edges don't overflow
-                    
-
+                .clipped()
+                
+                // Restaurant name + list button
                 HStack() {
                     Text(item.restoName)
                         .bold()
                         .font(.system(size: 25))
                         .foregroundColor(.white)
-                        .lineLimit(1) // Keep on one line
-                        .minimumScaleFactor(0.5) // Shrinks the text if it's too long, max shrinkage is half
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
                     
                     Spacer()
                     
                     Button {
-                        
+                        showSaveSheet = true
                     } label: {
                         Image(systemName: "list.bullet")
                             .font(.system(size: 25))
                             .foregroundColor(.white)
                     }
+                    .fullScreenCover(isPresented: $showSaveSheet) {
+                        Home_SaveView(item: item)
+                    }
                 }
                 .frame(width: 260)
                 .padding([.top, .horizontal], 7)
                 
+                // Star rating
                 StarRatingView(rating: item.rating)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    
                 
-                // distance as clickable Apple Maps link
+                // City + State as clickable link
                 Button {
                     openInMaps(latitude: item.latitude, longitude: item.longitude)
-                } label : {
-                    Text(distanceText)
+                } label: {
+                    Text("\(item.city), \(item.state)")
                         .underline()
                         .font(.system(size: 12))
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-            
-
-            } // end of HStack
-            .frame(width: 260) // or whatever size matches the image
+            }
+            .frame(width: 260)
         }
     } // end of body View
     
-    // takes user to apple maps with specific directions
+    // Open Apple Maps to restaurant location
     func openInMaps(latitude: Double, longitude: Double) {
         let urlString = "http://maps.apple.com/?daddr=\(latitude),\(longitude)"
         if let url = URL(string: urlString) {
@@ -106,13 +85,14 @@ struct Home_Item: View {
 } // end of Home_Item struct View
 
 #Preview {
-    // passing in test arguments
     Home_Item(item: HomeItemModel(
         ID: "testID",
         restoName: "Cava",
         picture: "CAVA",
         rating: 2.5,
         latitude: 33.915436,
-        longitude: -117.968712
+        longitude: -117.968712,
+        city: "La Habra",
+        state: "CA"
     ))
 }

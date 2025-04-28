@@ -105,6 +105,8 @@ struct HomeItemModel: Codable {
     let rating: Double // rating property (0.0 to 5.0), used for stars
     let latitude: Double // for the distance between the user and the restaurant
     let longitude: Double // for the distance between the user and the restaurant
+    let city: String 
+    let state: String
 }
 
 
@@ -204,5 +206,18 @@ class DictionaryDecoder {
     func decode<T>(_ type: T.Type, from dictionary: [String: Any]) throws -> T where T: Decodable {
         let data = try JSONSerialization.data(withJSONObject: dictionary, options: [])
         return try jsonDecoder.decode(T.self, from: data)
+    }
+}
+
+// helper class to encode from a dictionary 
+struct DictionaryEncoder {
+    func encode<T>(_ value: T) throws -> [String: Any] where T: Encodable {
+        let data = try JSONEncoder().encode(value)
+        let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
+        guard let dictionary = jsonObject as? [String: Any] else {
+            throw EncodingError.invalidValue(value, EncodingError.Context(codingPath: [],
+                debugDescription: "Encoded data is not a dictionary"))
+        }
+        return dictionary
     }
 }

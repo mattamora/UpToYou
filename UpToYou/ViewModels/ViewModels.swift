@@ -473,6 +473,107 @@ class HomeScreenViewModel: ObservableObject {
     
 }
 
+class HomeSaveViewModel: ObservableObject {
+    @Published var userLists: [CustomList] = []
+    
+    init() {
+        fetchUserLists()
+    }
+    
+    func fetchUserLists() {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+
+        Firestore.firestore()
+            .collection("Users").document(userID)
+            .collection("Lists")
+            .order(by: "createdDate", descending: true)
+            .getDocuments { snapshot, error in
+                if let error = error {
+                    print("Error fetching lists: \(error.localizedDescription)")
+                    return
+                }
+
+                guard let documents = snapshot?.documents else { return }
+
+                self.userLists = documents.compactMap { doc in
+                    try? doc.data(as: CustomList.self)
+                }
+            }
+    }
+    
+    func saveRestaurantToSelectedLists(item: HomeItemModel, selectedIDs: Set<String>, completion: @escaping () -> Void) {
+        guard let userID = Auth.auth().currentUser?.uid else { return }
+
+        let db = Firestore.firestore()
+
+        let group = DispatchGroup() // Track all save operations
+
+        for id in selectedIDs {
+            if id == "favorites-id" {
+                // Save to Favorites
+                group.enter()
+                let newItem = FavoriteItemModel(
+                    ID: item.ID,
+                    restoName: item.restoName,
+                    location: "\(item.city), \(item.state)",
+                    picture: item.picture,
+                    rating: item.rating,
+                    latitude: item.latitude,
+                    longitude: item.longitude
+                )
+                do {
+                    let data = try DictionaryEncoder().encode(newItem)
+                    db.collection("Users").document(userID)
+                        .collection("Favorite Restaurants").document(item.ID)
+                        .setData(data) { error in
+                            if let error = error {
+                                print("Error saving to Favorites: \(error.localizedDescription)")
+                            }
+                            group.leave()
+                        }
+                } catch {
+                    print("Encoding error: \(error.localizedDescription)")
+                    group.leave()
+                }
+
+            } else {
+                // Save to a List's restaurants array
+                group.enter()
+                let restaurantData: [String: Any] = [
+                    "id": item.ID,
+                    "name": item.restoName,
+                    "image_url": item.picture,
+                    "rating": item.rating,
+                    "location": [
+                        "city": item.city,
+                        "state": item.state
+                    ],
+                    "coordinates": [
+                        "latitude": item.latitude,
+                        "longitude": item.longitude
+                    ]
+                ]
+
+                let listRef = db.collection("Users").document(userID).collection("Lists").document(id)
+                listRef.updateData([
+                    "restaurants": FieldValue.arrayUnion([restaurantData])
+                ]) { error in
+                    if let error = error {
+                        print("Error saving to List: \(error.localizedDescription)")
+                    }
+                    group.leave()
+                }
+            }
+        }
+
+        group.notify(queue: .main) {
+            completion()
+        }
+    }
+
+}
+
+
 class ProfileScreenViewModel: ObservableObject {
     init() {}
     
